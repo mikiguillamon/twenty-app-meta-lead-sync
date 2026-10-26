@@ -1,0 +1,13 @@
+export type MetaQuestion = { key: string; label: string; type?: string };
+export type MetaPage = { id: string; name: string; enabled: boolean };
+export type MappingRule = { questionKey: string; target: string; replacements?: Record<string, string> };
+export type MetaForm = { id: string; pageId: string; name: string; status?: string; enabled: boolean; questions: MetaQuestion[]; mappings: MappingRule[]; updateExisting?: boolean };
+export type WorkspaceConfig = { version: 1; intervalMinutes: 1 | 2 | 5 | 10 | 15 | 30 | 60; pages: MetaPage[]; forms: MetaForm[] };
+export type SyncState = { lastSuccessAt?: string; lastAttemptAt?: string; lastError?: string; lastResult?: SyncCounters; completedRunId?: string };
+export type SyncCounters = { imported: number; linked: number; duplicate: number; review: number; failed: number; pages: number };
+export type HistoryEvent = { runId: string; formId: string; formName: string; startedAt: string; finishedAt: string; status: 'OK' | 'FAILED'; reason?: string; stats: SyncCounters };
+export type PersonField = { name: string; label: string; type: string; options?: { label: string; value: string }[]; isCustom?: boolean };
+export type MetaLead = { id: string; created_time: string; field_data?: Array<{ name: string; values?: string[] }> };
+export const DEFAULT_CONFIG: WorkspaceConfig = { version: 1, intervalMinutes: 5, pages: [], forms: [] };
+export const ALLOWED_INTERVALS = [1, 2, 5, 10, 15, 30, 60] as const;
+export const blankCounters = (): SyncCounters => ({ imported: 0, linked: 0, duplicate: 0, review: 0, failed: 0, pages: 0 });

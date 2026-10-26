@@ -1,0 +1,20 @@
+META LEAD SYNC FOR TWENTY 2.50 — BETA PRIVADA CON CÓDIGO REAL
+Entrega: 26/10/2026
+
+Este ZIP ya incluye el PROYECTO FUENTE de la aplicación nativa:
+- src/ aplicación, panel de ajustes, cron, jobs, Graph API, mapeos, ledger.
+- package.json, tsconfig.json y workflow GitHub Actions.
+- tests/ pruebas unitarias y de integración en memoria.
+- docs/ instalación, arquitectura, QA y publicación futura.
+
+LEE EN ESTE ORDEN:
+1) README.md
+2) docs/QA_RESULTADOS.md (qué se verificó y qué falta)
+3) docs/INSTALACION.md (GitHub -> build -> Twenty)
+
+No contiene tokens Meta, claves de Twenty ni conexiones a servicios externos.
+El documento CONTINUAR_EN_NUEVO_CHAT.md está conservado como material
+HISTÓRICO de la etapa anterior y ya no describe el estado actual del código.
+
+No desplegar a clientes ni publicar en Marketplace sin validación en el
+workspace JFF de Twenty 2.50.0 y completar el checklist docs/QA.md.

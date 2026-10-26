@@ -1,0 +1,28 @@
+{
+  "name": "twenty-app-meta-lead-sync-jff",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Private beta: per-workspace Meta Lead Ads polling integration for Twenty CRM",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "yarn@4.13.0",
+  "keywords": ["twenty-app", "meta-leads", "crm", "twenty"],
+  "engines": {"node": "^24.5.0", "yarn": "^4.0.2", "twenty": ">=2.50.0 <2.51.0"},
+  "scripts": {
+    "twenty": "twenty",
+    "build": "twenty dev:build",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --experimental-strip-types --experimental-loader ./tests/fixtures/sdk-loader.mjs --test tests/*.test.mjs",
+    "check": "yarn typecheck && yarn test && yarn build"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "twenty-client-sdk": "2.50.0",
+    "twenty-sdk": "2.50.0",
+    "typescript": "^5.9.3"
+  }
+}
