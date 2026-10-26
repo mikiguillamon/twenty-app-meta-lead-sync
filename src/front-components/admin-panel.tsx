@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { MetadataApiClient } from 'twenty-client-sdk/metadata';
 import { RestApiClient } from 'twenty-client-sdk/rest';
+import { useColorScheme } from 'twenty-sdk/front-component';
+import { getUiPalette, type UiPalette } from './ui-theme.ts';
 import type { HistoryEvent, MappingRule, MetaForm, MetaPage, PersonField, WorkspaceConfig } from '../lib/types.ts';
 
 type Screen = 'connections'|'pages'|'forms'|'mapping'|'sync';
@@ -8,17 +10,22 @@ type FormState = { formId: string; activeRunId?: string; lastSuccessAt?: string;
 type AdminData = { config: WorkspaceConfig; states: FormState[]; history: HistoryEvent[]; fields: PersonField[];
   metadataError?: string; credentials: { systemConfigured: boolean; pageTokensConfigured: boolean } };
 const api = new RestApiClient();
-const spacing: React.CSSProperties = { padding: 16, marginBottom: 16, border: '1px solid var(--color-gray-200,#d8dee5)', borderRadius: 10, background: 'var(--color-background-primary,#fff)' };
-const labelStyle: React.CSSProperties = { fontSize: 13, fontWeight: 600, marginBottom: 4 };
-const inputStyle: React.CSSProperties = { boxSizing:'border-box',width:'100%', padding: 9, borderRadius: 6, border: '1px solid #b9c2cc', fontFamily: 'inherit' };
-const buttonStyle: React.CSSProperties = { border:'1px solid #4f6a8e', background:'#e9f1fa', padding:'8px 12px', borderRadius:6, cursor:'pointer', color:'#1b385c', marginRight:6, marginTop:5 };
-const primaryStyle: React.CSSProperties = { ...buttonStyle, background: '#244d7b', color: '#fff' };
-const small: React.CSSProperties = { fontSize: 13, color: 'var(--color-text-secondary,#616c78)' };
-function Button({children,onClick,primary=false,disabled=false}: {children: React.ReactNode; onClick:()=>void; primary?:boolean;disabled?:boolean}) {
-  return <button type="button" disabled={disabled} onClick={onClick} style={{ ...(primary ? primaryStyle:buttonStyle), opacity:disabled ? 0.5 : 1 }}>{children}</button>;
+type ThemeStyles = ReturnType<typeof createStyles>;
+const createStyles = (theme: UiPalette) => {
+  const spacing: React.CSSProperties = { boxSizing: 'border-box', padding: 20, marginBottom: 16, border: '1px solid ' + theme.border, borderRadius: 10, background: theme.surface, color: theme.text };
+  const labelStyle: React.CSSProperties = { display:'block', fontSize: 13, fontWeight: 600, marginBottom: 6, color: theme.text };
+  const inputStyle: React.CSSProperties = { boxSizing:'border-box', width:'100%', minHeight:39, padding:'9px 11px', borderRadius:7, border:'1px solid '+theme.controlBorder, background:theme.control, color:theme.text, colorScheme:theme.colorScheme, fontFamily:'inherit', fontSize:14 };
+  const buttonStyle: React.CSSProperties = { border:'1px solid '+theme.neutralBorder, background:theme.neutralButton, padding:'9px 13px', borderRadius:7, cursor:'pointer', color:theme.neutralText, marginRight:8, marginTop:6, fontFamily:'inherit', fontSize:13, colorScheme:theme.colorScheme };
+  const primaryStyle: React.CSSProperties = { ...buttonStyle, borderColor:theme.primaryButton, background:theme.primaryButton, color:theme.primaryText };
+  const small: React.CSSProperties = { fontSize:13, color:theme.textMuted, lineHeight:1.5 };
+  const checkStyle: React.CSSProperties = { accentColor:theme.accent, colorScheme:theme.colorScheme, width:16, height:16, flexShrink:0 };
+  return {spacing,labelStyle,inputStyle,buttonStyle,primaryStyle,small,checkStyle};
+};
+function Button({children,onClick,styles,primary=false,disabled=false}: {children: React.ReactNode; onClick:()=>void;styles:ThemeStyles;primary?:boolean;disabled?:boolean}) {
+  return <button type="button" disabled={disabled} onClick={onClick} style={{ ...(primary ? styles.primaryStyle:styles.buttonStyle), opacity:disabled ? 0.5 : 1, cursor:disabled?'not-allowed':'pointer' }}>{children}</button>;
 }
-function Subhead({title,description}:{title:string;description?:string}) {
-  return <div style={{marginBottom:14}}><h3 style={{margin:'0 0 6px',fontSize:18}}>{title}</h3>{description && <p style={{...small,margin:0}}>{description}</p>}</div>;
+function Subhead({title,description,styles}:{title:string;description?:string;styles:ThemeStyles}) {
+  return <div style={{marginBottom:16}}><h3 style={{margin:'0 0 6px',fontSize:18,color:styles.spacing.color}}>{title}</h3>{description && <p style={{...styles.small,margin:0}}>{description}</p>}</div>;
 }
 const summarize = (value: unknown): string => {
   const e=value as {message?:string;body?:{message?:string}};
@@ -26,6 +33,10 @@ const summarize = (value: unknown): string => {
 };
 
 export function AdminPanel({screen}:{screen:Screen}) {
+  const colorScheme = useColorScheme();
+  const theme = getUiPalette(colorScheme === 'dark' ? 'dark' : 'light');
+  const styles = createStyles(theme);
+  const {spacing,labelStyle,inputStyle,small,checkStyle} = styles;
   const [data,setData] = useState<AdminData|null>(null);
   const [config,setConfig] = useState<WorkspaceConfig|null>(null);
   const [busy,setBusy] = useState(false);
@@ -81,66 +92,66 @@ export function AdminPanel({screen}:{screen:Screen}) {
   const selectedForm = forms.find(f=>f.id===mappingFormId);
   const selectedFields = data?.fields ?? [];
 
-  return <div style={{maxWidth:940,width:'100%',padding:'6px 8px 22px',fontFamily:'inherit',lineHeight:1.45}}>
+  return <div style={{maxWidth:940,width:'100%',padding:'8px 12px 24px',boxSizing:'border-box',fontFamily:'inherit',lineHeight:1.5,color:theme.text,colorScheme:theme.colorScheme}}>
     <div style={{display:'flex',alignItems:'baseline',gap:10,flexWrap:'wrap',marginBottom:14}}>
-      <h2 style={{fontSize:22,margin:0}}>Meta Lead Sync</h2>
+      <h2 style={{fontSize:22,margin:0,color:theme.text}}>Meta Lead Sync</h2>
       <span style={small}>Beta privada · Twenty 2.50 · configuración exclusiva de este workspace</span>
     </div>
-    {data?.metadataError && <p role="alert" style={{color:'#a8441f'}}>No se pudieron cargar todos los campos personalizados: {data.metadataError}</p>}
-    {status && <div role="status" style={{...spacing,background:status.startsWith('Error')?'#fff3ec':'#eef8f4',padding:10}}>{status}</div>}
+    {data?.metadataError && <p role="alert" style={{color:theme.errorText}}>No se pudieron cargar todos los campos personalizados: {data.metadataError}</p>}
+    {status && <div role="status" style={{...spacing,background:status.startsWith('Error')?theme.errorSurface:theme.successSurface,color:status.startsWith('Error')?theme.errorText:theme.successText,borderColor:status.startsWith('Error')?theme.errorBorder:theme.successBorder,padding:12}}>{status}</div>}
     {!config ? <div style={spacing}>Cargando configuración y verificando permisos…</div> : <>
       {screen==='connections' && <>
-        <Subhead title="Conexión con Meta" description="Introduce las credenciales de tu workspace. Nunca aparecen en el historial ni se guardan en KV." />
+        <Subhead styles={styles} title="Conexión con Meta" description="Introduce las credenciales de tu workspace. Nunca aparecen en el historial ni se guardan en KV." />
         <section style={spacing}>
-          <h4 style={{marginTop:0}}>System User Token (recomendado)</h4>
+          <h4 style={{marginTop:0,color:theme.text}}>System User Token (recomendado)</h4>
           <p style={small}>Estado: {data?.credentials.systemConfigured?'Configurado':'Sin configurar'}. Se resuelven Page Access Tokens de /me/accounts para cada ejecución.</p>
           <label style={labelStyle}>System User Token</label>
           <input type="password" value={systemToken} onChange={e=>setSystemToken(e.target.value)} placeholder="EA…" autoComplete="off" style={inputStyle} />
-          <Button primary disabled={busy||!systemToken} onClick={validationThenSaveSystem}>Validar con Meta y guardar cifrado</Button>
-          <Button disabled={busy||!data?.credentials.systemConfigured} onClick={()=>clearToken('META_SYSTEM_USER_TOKEN')}>Eliminar token</Button>
+          <Button styles={styles} primary disabled={busy||!systemToken} onClick={validationThenSaveSystem}>Validar con Meta y guardar cifrado</Button>
+          <Button styles={styles} disabled={busy||!data?.credentials.systemConfigured} onClick={()=>clearToken('META_SYSTEM_USER_TOKEN')}>Eliminar token</Button>
           <p style={small}>Puedes cambiar el token pegando uno nuevo. No lo incluyas en commits o logs.</p>
         </section>
         <section style={spacing}>
-          <h4 style={{marginTop:0}}>Page Access Tokens (opcional)</h4>
+          <h4 style={{marginTop:0,color:theme.text}}>Page Access Tokens (opcional)</h4>
           <p style={small}>Estado: {data?.credentials.pageTokensConfigured?'JSON configurado':'Sin configurar'}. Para páginas sin acceso mediante System User Token. Al guardar se reemplaza el JSON anterior completo.</p>
           <label style={labelStyle}>JSON confidencial: ID de página → token</label>
           <textarea rows={4} value={pageTokenJson} onChange={e=>setPageTokenJson(e.target.value)} placeholder={'{"123456789012345":"EA…"}'} spellCheck={false} style={{...inputStyle,fontFamily:'monospace'}} />
-          <Button disabled={busy||!pageTokenJson.trim()} onClick={validationThenSavePages}>Validar todas y reemplazar tokens</Button>
-          <Button disabled={busy||!data?.credentials.pageTokensConfigured} onClick={()=>clearToken('META_PAGE_TOKENS_JSON')}>Eliminar Page Tokens</Button>
+          <Button styles={styles} disabled={busy||!pageTokenJson.trim()} onClick={validationThenSavePages}>Validar todas y reemplazar tokens</Button>
+          <Button styles={styles} disabled={busy||!data?.credentials.pageTokensConfigured} onClick={()=>clearToken('META_PAGE_TOKENS_JSON')}>Eliminar Page Tokens</Button>
         </section>
         <p style={small}>No se crean suscripciones ni se consulta /subscribed_apps. El webhook existente de Meta permanece intacto.</p>
       </>}
       {screen==='pages' && <>
-        <Subhead title="Páginas de Meta" description="Descubre todas las páginas accesibles con tu token y selecciona las que importarán leads." />
+        <Subhead styles={styles} title="Páginas de Meta" description="Descubre todas las páginas accesibles con tu token y selecciona las que importarán leads." />
         <section style={spacing}>
-          <Button primary disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-pages',{}),'Páginas actualizadas.')}>Descubrir mis páginas</Button>
-          <Button disabled={busy} onClick={save}>Guardar páginas activas</Button>
+          <Button styles={styles} primary disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-pages',{}),'Páginas actualizadas.')}>Descubrir mis páginas</Button>
+          <Button styles={styles} disabled={busy} onClick={save}>Guardar páginas activas</Button>
         </section>
         {pages.length===0?<p>No hay páginas registradas. Descúbrelas usando las credenciales de Conexiones.</p>:
           pages.map(page=><section key={page.id} style={{...spacing,display:'flex',alignItems:'center',gap:12,justifyContent:'space-between',flexWrap:'wrap'}}>
             <label style={{display:'flex',alignItems:'center',gap:12}}>
-              <input type="checkbox" checked={page.enabled} onChange={e=>patchPage(page.id,e.target.checked)} />
+              <input style={checkStyle} type="checkbox" checked={page.enabled} onChange={e=>patchPage(page.id,e.target.checked)} />
               <span><strong>{page.name}</strong><span style={{display:'block',...small}}>Page ID: {page.id}</span></span>
             </label>
-            <Button disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-forms',{pageId:page.id}),`Formularios de ${page.name} actualizados.`)}>Buscar formularios</Button>
+            <Button styles={styles} disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-forms',{pageId:page.id}),`Formularios de ${page.name} actualizados.`)}>Buscar formularios</Button>
           </section>)}
       </>}
       {screen==='forms' && <>
-        <Subhead title="Formularios de captación" description="Cada formulario se activa por separado. Los formularios de una misma página pueden tener asignaciones diferentes." />
-        <Button disabled={busy} primary onClick={save}>Guardar formularios activos</Button>
+        <Subhead styles={styles} title="Formularios de captación" description="Cada formulario se activa por separado. Los formularios de una misma página pueden tener asignaciones diferentes." />
+        <Button styles={styles} disabled={busy} primary onClick={save}>Guardar formularios activos</Button>
         {forms.length===0 ? <p>No hay formularios. Ve a Páginas y pulsa Buscar formularios.</p> : forms.map(form=>
           <section key={form.id} style={spacing}>
             <label style={{display:'flex',gap:10,alignItems:'center'}}>
-              <input type="checkbox" checked={form.enabled} disabled={!pages.some(p=>p.id===form.pageId&&p.enabled)} onChange={e=>patchForm(form.id,{enabled:e.target.checked})} />
+              <input style={checkStyle} type="checkbox" checked={form.enabled} disabled={!pages.some(p=>p.id===form.pageId&&p.enabled)} onChange={e=>patchForm(form.id,{enabled:e.target.checked})} />
               <strong>{form.name}</strong>
             </label>
             <p style={small}>Página: {pages.find(p=>p.id===form.pageId)?.name ?? form.pageId} · ID: {form.id} · {form.status??'sin estado'} · Preguntas: {form.questions.length}</p>
-            <label style={{display:'flex',gap:8,alignItems:'center',fontSize:13}}><input type="checkbox" checked={form.updateExisting===true} onChange={e=>patchForm(form.id,{updateExisting:e.target.checked})} />Actualizar campos de Personas existentes (desactivado por defecto)</label>
+            <label style={{display:'flex',gap:8,alignItems:'center',fontSize:13,color:theme.text}}><input style={checkStyle} type="checkbox" checked={form.updateExisting===true} onChange={e=>patchForm(form.id,{updateExisting:e.target.checked})} />Actualizar campos de Personas existentes (desactivado por defecto)</label>
           </section>)}
       </>}
       {screen==='mapping' && <>
-        <Subhead title="Mapeo de campos por formulario" description="Selecciona un campo de Persona para cada pregunta; los campos personalizados aparecen si la Metadata API permite su lectura." />
-        {data?.metadataError && <p style={{color:'#ae401f'}}>{data.metadataError}</p>}
+        <Subhead styles={styles} title="Mapeo de campos por formulario" description="Selecciona un campo de Persona para cada pregunta; los campos personalizados aparecen si la Metadata API permite su lectura." />
+        {data?.metadataError && <p style={{color:theme.errorText}}>{data.metadataError}</p>}
         <div style={spacing}><label style={labelStyle}>Formulario</label><select style={inputStyle} value={mappingFormId} onChange={e=>setMappingFormId(e.target.value)}>
           {forms.map(f=><option key={f.id} value={f.id}>{f.name} · {pages.find(p=>p.id===f.pageId)?.name}</option>)}
         </select></div>
@@ -149,7 +160,7 @@ export function AdminPanel({screen}:{screen:Screen}) {
           {selectedForm.questions.map(question=>{
             const rule=selectedForm.mappings.find(m=>m.questionKey===question.key);
             const field=selectedFields.find(f=>f.name===rule?.target);
-            return <div key={question.key} style={{borderBottom:'1px solid #dbe2e8',padding:'12px 0'}}>
+            return <div key={question.key} style={{borderBottom:'1px solid '+theme.divider,padding:'12px 0'}}>
               <label style={{display:'block',...labelStyle}}>{question.label||question.key}</label>
               <p style={{...small,margin:'0 0 6px'}}>{question.key} · {question.type ?? 'texto'}</p>
               <select style={inputStyle} value={rule?.target??''} onChange={e=>patchMap(selectedForm,question.key,e.target.value)}>
@@ -166,17 +177,17 @@ export function AdminPanel({screen}:{screen:Screen}) {
                 </div>}
             </div>;
           })}
-          <Button primary disabled={busy||!selectedFields.length} onClick={save}>Guardar mapeo de este workspace</Button>
+          <Button styles={styles} primary disabled={busy||!selectedFields.length} onClick={save}>Guardar mapeo de este workspace</Button>
         </section>}
       </>}
       {screen==='sync' && <>
-        <Subhead title="Sincronización e historial" description="Una ejecución de cron cada minuto comprueba la frecuencia elegida en este workspace. Los trabajos se realizan en lotes." />
+        <Subhead styles={styles} title="Sincronización e historial" description="Una ejecución de cron cada minuto comprueba la frecuencia elegida en este workspace. Los trabajos se realizan en lotes." />
         <section style={spacing}>
           <label style={{display:'block',...labelStyle}}>Intervalo automático</label>
           <select style={{...inputStyle,maxWidth:260}} value={config.intervalMinutes} onChange={e=>setConfig(c=>c?{...c,intervalMinutes:Number(e.target.value) as WorkspaceConfig['intervalMinutes']}:c)}>
             {[1,2,5,10,15,30,60].map(n=><option value={n} key={n}>Cada {n} minuto{n===1?'':'s'}</option>)}
           </select>
-          <div><Button onClick={save} disabled={busy}>Guardar frecuencia</Button></div>
+          <div><Button styles={styles} onClick={save} disabled={busy}>Guardar frecuencia</Button></div>
         </section>
         <section style={spacing}>
           <label style={{display:'block',...labelStyle}}>Formulario para sincronizar</label>
@@ -184,23 +195,23 @@ export function AdminPanel({screen}:{screen:Screen}) {
             <option value="">Todos los formularios activos</option>
             {forms.filter(f=>f.enabled).map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
-          <label style={{display:'flex',gap:8,marginTop:9,fontSize:13}}><input type="checkbox" checked={retryReview} onChange={e=>setRetryReview(e.target.checked)}/>Reprocesar también entradas NEEDS_REVIEW (tras corregir el mapeo)</label>
-          <Button primary disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),retryReview}),'Trabajo de sincronización encolado. Consulta el historial después de actualizar.')}>Sincronizar ahora</Button>
-          <Button disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),historical:true,retryReview}),'Importación histórica encolada (hasta 90 días).')}>Importar histórico (90 días)</Button>
-          <Button disabled={busy} onClick={()=>void run(async()=>{},'Estado e historial actualizados.')}>Actualizar estado</Button>
+          <label style={{display:'flex',gap:8,marginTop:9,fontSize:13}}><input style={checkStyle} type="checkbox" checked={retryReview} onChange={e=>setRetryReview(e.target.checked)}/>Reprocesar también entradas NEEDS_REVIEW (tras corregir el mapeo)</label>
+          <Button styles={styles} primary disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),retryReview}),'Trabajo de sincronización encolado. Consulta el historial después de actualizar.')}>Sincronizar ahora</Button>
+          <Button styles={styles} disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),historical:true,retryReview}),'Importación histórica encolada (hasta 90 días).')}>Importar histórico (90 días)</Button>
+          <Button styles={styles} disabled={busy} onClick={()=>void run(async()=>{},'Estado e historial actualizados.')}>Actualizar estado</Button>
         </section>
-        <section style={spacing}><h4 style={{marginTop:0}}>Estado por formulario</h4>
-          {data?.states.length?data.states.map(st=><div key={st.formId} style={{borderBottom:'1px solid #dbe2e8',padding:'10px 0'}}>
+        <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Estado por formulario</h4>
+          {data?.states.length?data.states.map(st=><div key={st.formId} style={{borderBottom:'1px solid '+theme.divider,padding:'10px 0'}}>
             <strong>{forms.find(f=>f.id===st.formId)?.name??st.formId}</strong> · {st.activeRunId?'En curso':'Sin trabajo activo'}
             <div style={small}>Último éxito: {st.lastSuccessAt?new Date(st.lastSuccessAt).toLocaleString():'Nunca'} · Último intento: {st.lastAttemptAt?new Date(st.lastAttemptAt).toLocaleString():'Nunca'}</div>
-            {st.lastError && <div style={{color:'#ad441c',fontSize:13}}>Error: {st.lastError}</div>}
+            {st.lastError && <div style={{color:theme.errorText,fontSize:13}}>Error: {st.lastError}</div>}
           </div>):<p style={small}>No hay formularios configurados.</p>}
         </section>
-        <section style={spacing}><h4 style={{marginTop:0}}>Últimas ejecuciones</h4>
-          <div style={{overflowX:'auto'}}><table style={{borderCollapse:'collapse',width:'100%',fontSize:13}}><thead><tr>{['Finalizado','Formulario','Estado','Nuevos','Vinculados','Duplicados','Revisión','Fallidos'].map(x=><th key={x} style={{textAlign:'left',padding:7,borderBottom:'1px solid #c7d0d9'}}>{x}</th>)}</tr></thead>
-          <tbody>{(data?.history??[]).map(evt=><tr key={evt.runId}>{[new Date(evt.finishedAt).toLocaleString(),evt.formName,evt.status,evt.stats.imported,evt.stats.linked,evt.stats.duplicate,evt.stats.review,evt.stats.failed].map((x,i)=><td key={i} style={{padding:7,borderBottom:'1px solid #edf0f3'}}>{x}</td>)}</tr>)}</tbody></table></div>
+        <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Últimas ejecuciones</h4>
+          <div style={{overflowX:'auto'}}><table style={{borderCollapse:'collapse',width:'100%',fontSize:13}}><thead><tr>{['Finalizado','Formulario','Estado','Nuevos','Vinculados','Duplicados','Revisión','Fallidos'].map(x=><th key={x} style={{textAlign:'left',padding:7,borderBottom:'1px solid '+theme.border,color:theme.textMuted}}>{x}</th>)}</tr></thead>
+          <tbody>{(data?.history??[]).map(evt=><tr key={evt.runId}>{[new Date(evt.finishedAt).toLocaleString(),evt.formName,evt.status,evt.stats.imported,evt.stats.linked,evt.stats.duplicate,evt.stats.review,evt.stats.failed].map((x,i)=><td key={i} style={{padding:7,borderBottom:'1px solid '+theme.divider,color:theme.text}}>{x}</td>)}</tr>)}</tbody></table></div>
           {!data?.history.length&&<p style={small}>Todavía no se ha completado ninguna sincronización.</p>}
-          {data?.history.filter(e=>e.reason).slice(0,5).map(e=><p key={e.runId} style={{fontSize:12,color:'#ac441e'}}>{e.formName}: {e.reason}</p>)}
+          {data?.history.filter(e=>e.reason).slice(0,5).map(e=><p key={e.runId} style={{fontSize:12,color:theme.errorText}}>{e.formName}: {e.reason}</p>)}
         </section>
       </>}
       <p style={{...small,marginTop:18}}>Los tokens se almacenan en variables cifradas de Twenty. Las respuestas a formularios contienen datos personales; controla los permisos y la retención antes de producción.</p>
