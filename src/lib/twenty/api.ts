@@ -74,10 +74,9 @@ export async function findLedger(leadId: string): Promise<LedgerRecord | undefin
 }
 export async function claimLedger(ledger: LedgerData): Promise<'created'|'raced'> {
   try {
-    const response = await newClient().post(LEDGER_PATH, { ...ledger, name: ledger.leadgenId });
-    if (!personId(getObject(response).data) && !personId(response) && !personId(getObject(response).metaSyncSubmission)) {
-      throw new Error('Twenty no confirmó el registro de Meta Submission');
-    }
+    // A successful HTTP 2xx is authoritative: REST response envelopes vary across
+    // Twenty versions. The caller reads the row back by its unique leadgenId.
+    await newClient().post(LEDGER_PATH, { ...ledger, name: ledger.leadgenId });
     return 'created';
   } catch (e) {
     // Re-read to identify a unique-index collision; don't turn unrelated CRM errors into duplicates.
