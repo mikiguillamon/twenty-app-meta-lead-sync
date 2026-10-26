@@ -1,6 +1,6 @@
 export const memory = {
-  kv: new Map(), people: new Map(), ledger: new Map(), jobs: new Map(), seq: 0,
-  reset() { this.kv.clear();this.people.clear();this.ledger.clear();this.jobs.clear();this.seq=0; },
+  kv: new Map(), people: new Map(), ledger: new Map(), jobs: new Map(), seq: 0, ledgerMinimalResponse: false,
+  reset() { this.kv.clear();this.people.clear();this.ledger.clear();this.jobs.clear();this.seq=0;this.ledgerMinimalResponse=false; },
 };
 export const kv = {
   async get(key) { return memory.kv.has(key) ? structuredClone(memory.kv.get(key)) : null; },
@@ -41,7 +41,7 @@ export class RestApiClient {
     if (path === '/rest/people') { memory.people.set(id,{id,...structuredClone(data)});return {data:{id}}; }
     if (path === '/rest/metaSyncSubmissions') {
       if ([...memory.ledger.values()].some(v=>v.leadgenId===data.leadgenId)) throw Error('unique index violation');
-      memory.ledger.set(id,{id,...structuredClone(data),updatedAt:new Date().toISOString()});return {data:{id}};
+      memory.ledger.set(id,{id,...structuredClone(data),updatedAt:new Date().toISOString()});return memory.ledgerMinimalResponse ? { success: true } : {data:{id}};
     }
     throw Error(`POST unexpected: ${path}`);
   }
