@@ -6,8 +6,17 @@
   "license": "MIT",
   "type": "module",
   "packageManager": "yarn@4.13.0",
-  "keywords": ["twenty-app", "meta-leads", "crm", "twenty"],
-  "engines": {"node": "^24.5.0", "yarn": "^4.0.2", "twenty": ">=2.50.0 <2.51.0"},
+  "keywords": [
+    "twenty-app",
+    "meta-leads",
+    "crm",
+    "twenty"
+  ],
+  "engines": {
+    "node": "^24.5.0",
+    "yarn": "^4.0.2",
+    "twenty": ">=2.50.0 <2.51.0"
+  },
   "scripts": {
     "twenty": "twenty",
     "build": "twenty dev:build",
