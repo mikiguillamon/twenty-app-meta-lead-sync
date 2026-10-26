@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 — 2026-10-26
+
+- Evita falsos conflictos de concurrencia al crear el ledger de deduplicación: una respuesta HTTP 2xx confirma la creación aunque el cuerpo REST no contenga el ID en el formato esperado.
+- La lectura posterior por leadgenId se mantiene para obtener el registro y su ID, y la restricción única sigue protegiendo contra carreras reales.
+- Añade una prueba de integración con respuesta mínima de Twenty y verificación de deduplicación tras el primer import.
+- Cambio de bajo alcance; no altera credenciales, Meta Graph, webhooks ni registros existentes.
+
 ## 0.1.1 — 2026-10-26
 
 - Ajustado el panel de administración a los temas claro y oscuro de Twenty mediante `useColorScheme()`.
