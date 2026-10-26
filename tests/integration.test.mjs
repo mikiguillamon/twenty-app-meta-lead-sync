@@ -93,3 +93,21 @@ test('two pages: idempotent job replay does not count page twice',async()=>{
   assert.equal((await loadHistory([FORM])).length,1);
   usePagination=false;
 });
+
+test('ledger creation with successful minimal Twenty response imports instead of leaving CLAIMED', async () => {
+  memory.reset(); requests=[]; errorStatus=0; usePagination=false;
+  memory.ledgerMinimalResponse=true;
+  await saveConfig(config);
+  const scheduled=await scheduleForm(form);
+  const job=memory.jobs.get(`mls-${scheduled.runId}-0`);
+  const result=await runFormPage(job,0,3);
+  assert.equal(result.done,true);
+  assert.equal(memory.people.size,1);
+  assert.equal([...memory.ledger.values()][0].status,'PROCESSED');
+  assert.equal((await loadFormState(FORM)).lastResult.imported,1);
+  const next=await scheduleForm(form);
+  await runFormPage(memory.jobs.get(`mls-${next.runId}-0`),0,3);
+  assert.equal(memory.people.size,1);
+  assert.equal((await loadFormState(FORM)).lastResult.duplicate,1);
+  memory.ledgerMinimalResponse=false;
+});
