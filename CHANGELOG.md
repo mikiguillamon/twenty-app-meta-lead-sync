@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1 — 2026-10-26
+
+- Ajustado el panel de administración a los temas claro y oscuro de Twenty mediante `useColorScheme()`.
+- Paleta con contraste AA para textos, campos, botones y avisos; tarjetas, selects, checkboxes y tablas de cinco pestañas.
+- Dos tests de contraste de color; sin cambios en integraciones Meta, estado ni permisos.
+- Pendiente comprobar ambas apariencias visualmente en el workspace real.
+
 ## 0.1.0 — 2026-10-26
 
 - Primera implementación **real** de la app nativa para Twenty 2.50.0, partiendo de la documentación de continuidad.
