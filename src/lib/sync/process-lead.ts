@@ -20,18 +20,16 @@ export async function processLead(lead: MetaLead, form: MetaForm, fields: Person
   if (ledger?.status === 'CLAIMED' && Date.now() - Date.parse(ledger.updatedAt ?? '') < 5 * 60_000) {
     throw new Error('Otro trabajo está importando este lead; se reintentará.');
   }
-  const answers: Record<string, string[]> = {};
-  for (const fd of lead.field_data ?? []) {
-    if (fd && typeof fd.name === 'string') answers[fd.name.slice(0, 120)] = (fd.values ?? []).slice(0, 30).map(v => String(v).slice(0, 2000));
-  }
+  // Meta responses are processed in memory only. The deduplication ledger must
+  // never keep copies of lead answers (names, emails, phones or custom replies).
   if (!ledger) {
     const claimed = await claimLedger({ leadgenId: lead.id, metaPageId: form.pageId, metaFormId: form.id,
-      status: 'CLAIMED', metaCreatedAt: lead.created_time, answers });
+      status: 'CLAIMED', metaCreatedAt: lead.created_time });
     if (claimed === 'raced') throw new Error('Otro trabajo ha reclamado este lead; se reintentará.');
     ledger = await findLedger(lead.id);
     if (!ledger) throw new Error('No se puede recuperar el nuevo ledger.');
   } else {
-    await patchLedger(ledger.id, { status: 'CLAIMED', failureReason: '', answers,
+    await patchLedger(ledger.id, { status: 'CLAIMED', failureReason: '',
       ...(linkedPersonWasDeleted ? { personRecordId: '' } : {}) });
     if (linkedPersonWasDeleted) ledger = { ...ledger, personRecordId: undefined };
   }
