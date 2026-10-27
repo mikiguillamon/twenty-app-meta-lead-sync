@@ -129,3 +129,15 @@ test('confirmed force-once bypasses local pause for one page without moving curs
   assert.equal(memory.jobs.has(`mls-${forced.runId}-1`),false);
   usePagination=false;memory.reset();
 });
+
+test('successful Person POST with no ID is recovered without duplicate creation',async()=>{
+ memory.reset();requests=[];errorStatus=0;usePagination=false;await saveConfig(config);
+ memory.personMinimalResponse=true;
+ const job1=await scheduleForm(form,{forceOnce:true});
+ await runFormPage(memory.jobs.get(`mls-${job1.runId}-0`),0,3);
+ assert.equal(memory.people.size,1);
+ assert.equal([...memory.ledger.values()][0].status,'PROCESSED');
+ const job2=await scheduleForm(form,{forceOnce:true});
+ await runFormPage(memory.jobs.get(`mls-${job2.runId}-0`),0,3);
+ assert.equal(memory.people.size,1);
+});
