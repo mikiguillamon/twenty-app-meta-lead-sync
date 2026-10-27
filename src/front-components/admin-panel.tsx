@@ -126,136 +126,136 @@ export function AdminPanel({screen}:{screen:Screen}) {
     {status && <div role="status" style={{...spacing,background:statusError?theme.errorSurface:theme.successSurface,color:statusError?theme.errorText:theme.successText,borderColor:statusError?theme.errorBorder:theme.successBorder,padding:12}}>{status}</div>}
     {!config ? <div style={spacing}>{t('loading')}</div> : <>
       {screen==='connections' && <>
-        <Subhead styles={styles} title="Conexión con Meta" />
+        <Subhead styles={styles} title={t("connectionsTitle")} />
         <section style={spacing}>
-          <h4 style={{marginTop:0,color:theme.text}}>System User Token (recomendado)</h4>
+          <h4 style={{marginTop:0,color:theme.text}}>{t("systemTokenRecommended")}</h4>
           <div role="status" style={{...small,padding:12,borderRadius:8,marginBottom:12,border:'1px solid '+(data?.credentials.systemConfigured?theme.successBorder:theme.border),background:data?.credentials.systemConfigured?theme.successSurface:theme.control,color:data?.credentials.systemConfigured?theme.successText:theme.textMuted}}>
-            {data?.credentials.systemConfigured?'✓ Token guardado':'○ Sin token · Añade uno para conectar con Meta.'}
+            {data?.credentials.systemConfigured?t('tokenStored'):t('tokenMissing')}
           </div>
-          <label style={labelStyle}>System User Token</label>
+          <label style={labelStyle}>{t("systemTokenLabel")}</label>
           <input type="password" value={systemToken} onChange={e=>setSystemToken(e.target.value)} placeholder="EA…" autoComplete="off" style={inputStyle} />
-          <Button styles={styles} primary disabled={busy||!systemToken} onClick={validationThenSaveSystem}>Validar con Meta y guardar cifrado</Button>
-          <Button styles={styles} disabled={busy||!data?.credentials.systemConfigured} onClick={()=>clearToken('META_SYSTEM_USER_TOKEN')}>Eliminar token</Button>
+          <Button styles={styles} primary disabled={busy||!systemToken} onClick={validationThenSaveSystem}>{t("validateSystemToken")}</Button>
+          <Button styles={styles} disabled={busy||!data?.credentials.systemConfigured} onClick={()=>clearToken('META_SYSTEM_USER_TOKEN')}>{t("deleteToken")}</Button>
           
         </section>
         <section style={spacing}>
-          <h4 style={{marginTop:0,color:theme.text}}>Page Access Tokens (opcional)</h4>
+          <h4 style={{marginTop:0,color:theme.text}}>{t("pageTokensOptional")}</h4>
           <div role="status" style={{...small,padding:12,borderRadius:8,marginBottom:12,border:'1px solid '+(data?.credentials.pageTokensConfigured?theme.successBorder:theme.border),background:data?.credentials.pageTokensConfigured?theme.successSurface:theme.control,color:data?.credentials.pageTokensConfigured?theme.successText:theme.textMuted}}>
-            {data?.credentials.pageTokensConfigured?'✓ Tokens adicionales guardados':'○ Sin tokens adicionales · Opcional'}
+            {data?.credentials.pageTokensConfigured?t('pageTokensStored'):t('pageTokensMissing')}
           </div>
-          <label style={labelStyle}>JSON: ID de página → token</label>
+          <label style={labelStyle}>{t("pageTokensJsonLabel")}</label>
           <textarea rows={4} value={pageTokenJson} onChange={e=>setPageTokenJson(e.target.value)} placeholder={'{"123456789012345":"EA…"}'} spellCheck={false} style={{...inputStyle,fontFamily:'monospace'}} />
-          <Button styles={styles} disabled={busy||!pageTokenJson.trim()} onClick={validationThenSavePages}>Validar todas y reemplazar tokens</Button>
-          <Button styles={styles} disabled={busy||!data?.credentials.pageTokensConfigured} onClick={()=>clearToken('META_PAGE_TOKENS_JSON')}>Eliminar Page Tokens</Button>
+          <Button styles={styles} disabled={busy||!pageTokenJson.trim()} onClick={validationThenSavePages}>{t("validatePageTokens")}</Button>
+          <Button styles={styles} disabled={busy||!data?.credentials.pageTokensConfigured} onClick={()=>clearToken('META_PAGE_TOKENS_JSON')}>{t("removePageTokens")}</Button>
         </section>
-        <p style={small}>No se crean suscripciones ni se consulta /subscribed_apps. El webhook existente de Meta permanece intacto.</p>
+        <p style={small}>{t("webhookUnchanged")}</p>
       </>}
       {screen==='pages' && <>
-        <Subhead styles={styles} title="Páginas de Meta" description="Descubre todas las páginas accesibles con tu token y selecciona las que importarán leads." />
+        <Subhead styles={styles} title={t("pagesTitle")} description={t("pagesDescription")} />
         <section style={spacing}>
-          <Button styles={styles} primary disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-pages',{}),'Páginas actualizadas.')}>Descubrir mis páginas</Button>
-          <Button styles={styles} disabled={busy} onClick={save}>Guardar páginas activas</Button>
+          <Button styles={styles} primary disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-pages',{}),t('pagesRefreshed'))}>{t("discoverPages")}</Button>
+          <Button styles={styles} disabled={busy} onClick={save}>{t("savePages")}</Button>
         </section>
-        {pages.length>0 && <section style={{...spacing,padding:14}}><label style={labelStyle}>Buscar páginas</label><input type="search" style={inputStyle} value={pageSearch} onChange={e=>setPageSearch(e.target.value)} placeholder="Nombre o ID..." /><p style={{...small,margin:'8px 0 0'}}>{visiblePages.length} de {pages.length} páginas · {pages.filter(p=>p.enabled).length} activas</p></section>}
-        {pages.length===0?<p>No hay páginas registradas. Descúbrelas usando las credenciales de Conexiones.</p>:
-          visiblePages.length===0?<p style={small}>No hay páginas que coincidan.</p>:visiblePages.map(page=><section key={page.id} style={{...spacing,display:'flex',alignItems:'center',gap:12,justifyContent:'space-between',flexWrap:'wrap'}}>
+        {pages.length>0 && <section style={{...spacing,padding:14}}><label style={labelStyle}>{t("searchPages")}</label><input type="search" style={inputStyle} value={pageSearch} onChange={e=>setPageSearch(e.target.value)} placeholder={t("searchPagesPlaceholder")} /><p style={{...small,margin:'8px 0 0'}}>{t("pagesCounter",{visible:visiblePages.length,total:pages.length,active:pages.filter(p=>p.enabled).length})}</p></section>}
+        {pages.length===0?<p>{t("noPages")}</p>:
+          visiblePages.length===0?<p style={small}>{t("noPagesMatch")}</p>:visiblePages.map(page=><section key={page.id} style={{...spacing,display:'flex',alignItems:'center',gap:12,justifyContent:'space-between',flexWrap:'wrap'}}>
             <label style={{display:'flex',alignItems:'center',gap:12}}>
               <input style={checkStyle} type="checkbox" checked={page.enabled} onChange={e=>patchPage(page.id,e.target.checked)} />
-              <span><strong>{page.name}</strong><span style={{display:'block',...small}}>Page ID: {page.id}</span></span>
+              <span><strong>{page.name}</strong><span style={{display:'block',...small}}>{t("pageIdLabel",{id:page.id})}</span></span>
             </label>
-            <Button styles={styles} disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-forms',{pageId:page.id}),`Formularios de ${page.name} actualizados.`)}>Actualizar formularios</Button>
+            <Button styles={styles} disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-forms',{pageId:page.id}),t("pageFormsRefreshed",{page:page.name}))}>{t("updateForms")}</Button>
           </section>)}
       </>}
       {screen==='forms' && <>
-        <Subhead styles={styles} title="Formularios de captación" description="Cada formulario se activa por separado. Los formularios de una misma página pueden tener asignaciones diferentes." />
-        <div style={{marginBottom:18}}><Button styles={styles} disabled={busy} primary onClick={save}>Guardar formularios activos</Button></div>
-        {forms.length>0 && <section style={{...spacing,padding:14}}><label style={labelStyle}>Buscar formularios</label><input type="search" style={inputStyle} value={formSearch} onChange={e=>setFormSearch(e.target.value)} placeholder="Nombre, ID o página..." /><p style={{...small,margin:'8px 0 0'}}>{visibleForms.length} de {forms.length} formularios · {forms.filter(f=>f.enabled).length} activos</p></section>}
-        {forms.length===0 ? <p>No hay formularios. Ve a Páginas y pulsa Actualizar formularios.</p> : visibleForms.length===0 ? <p style={small}>No hay formularios que coincidan.</p> : visibleForms.map(form=>
+        <Subhead styles={styles} title={t("formsTitle")} description={t("formsDescription")} />
+        <div style={{marginBottom:18}}><Button styles={styles} disabled={busy} primary onClick={save}>{t("saveForms")}</Button></div>
+        {forms.length>0 && <section style={{...spacing,padding:14}}><label style={labelStyle}>{t("searchForms")}</label><input type="search" style={inputStyle} value={formSearch} onChange={e=>setFormSearch(e.target.value)} placeholder={t("searchFormsPlaceholder")} /><p style={{...small,margin:'8px 0 0'}}>{t("formsCounter",{visible:visibleForms.length,total:forms.length,active:forms.filter(f=>f.enabled).length})}</p></section>}
+        {forms.length===0 ? <p>{t("noForms")}</p> : visibleForms.length===0 ? <p style={small}>{t("noFormsMatch")}</p> : visibleForms.map(form=>
           <section key={form.id} style={spacing}>
             <label style={{display:'flex',gap:10,alignItems:'center'}}>
               <input style={checkStyle} type="checkbox" checked={form.enabled} disabled={!pages.some(p=>p.id===form.pageId&&p.enabled)} onChange={e=>patchForm(form.id,{enabled:e.target.checked})} />
               <strong>{form.name}</strong>
             </label>
-            <p style={small}>Página: {pages.find(p=>p.id===form.pageId)?.name ?? form.pageId} · ID: {form.id} · {form.status??'sin estado'} · Preguntas: {form.questions.length}</p>
-            <label style={{display:'flex',gap:8,alignItems:'center',fontSize:13,color:theme.text}}><input style={checkStyle} type="checkbox" checked={form.updateExisting===true} onChange={e=>patchForm(form.id,{updateExisting:e.target.checked})} />Actualizar campos de Personas existentes</label>
+            <p style={small}>{t("formSummary",{page:pages.find(p=>p.id===form.pageId)?.name ?? form.pageId,id:form.id,status:form.status??t("noFormStatus"),count:form.questions.length})}</p>
+            <label style={{display:'flex',gap:8,alignItems:'center',fontSize:13,color:theme.text}}><input style={checkStyle} type="checkbox" checked={form.updateExisting===true} onChange={e=>patchForm(form.id,{updateExisting:e.target.checked})} />{t("updateExisting")}</label>
           </section>)}
       </>}
       {screen==='mapping' && <>
-        <Subhead styles={styles} title="Mapeo de campos por formulario" description="Selecciona un campo de Persona para cada pregunta; los campos personalizados aparecen si la Metadata API permite su lectura." />
+        <Subhead styles={styles} title={t("mappingTitle")} description={t("mappingDescription")} />
         {data?.metadataError && <p style={{color:theme.errorText}}>{data.metadataError}</p>}
-        <div style={spacing}><label style={labelStyle}>Formulario</label><select style={inputStyle} value={mappingFormId} onChange={e=>setMappingFormId(e.target.value)}>
+        <div style={spacing}><label style={labelStyle}>{t("formLabel")}</label><select style={inputStyle} value={mappingFormId} onChange={e=>setMappingFormId(e.target.value)}>
           {forms.map(f=><option key={f.id} value={f.id}>{f.name} · {pages.find(p=>p.id===f.pageId)?.name}</option>)}
         </select></div>
         {selectedForm && <section style={spacing}>
-          {selectedForm.questions.length===0 && <p>Meta no ha devuelto las preguntas de este formulario.</p>}
+          {selectedForm.questions.length===0 && <p>{t("noQuestions")}</p>}
           {selectedForm.questions.map(question=>{
             const rule=selectedForm.mappings.find(m=>m.questionKey===question.key);
             const field=selectedFields.find(f=>f.name===rule?.target);
             return <div key={question.key} style={{borderBottom:'1px solid '+theme.divider,padding:'12px 0'}}>
               <label style={{display:'block',...labelStyle}}>{question.label||question.key}</label>
-              <p style={{...small,margin:'0 0 6px'}}>{question.key} · {question.type ?? 'texto'}</p>
+              <p style={{...small,margin:'0 0 6px'}}>{question.key} · {question.type ?? t('questionTypeText')}</p>
               <select style={inputStyle} value={rule?.target??''} onChange={e=>patchMap(selectedForm,question.key,e.target.value)}>
-                <option value="">No importar esta pregunta</option>
+                <option value="">{t("ignoreQuestion")}</option>
                 {selectedFields.filter(f=>!selectedForm.mappings.some(r=>r.questionKey!==question.key&&r.target===f.name)).map(f=>
-                  <option key={f.name} value={f.name}>{f.label} ({f.type}){f.isCustom?' · personalizado':''}</option>)}
+                  <option key={f.name} value={f.name}>{f.label} ({f.type}){f.isCustom?t('customFieldSuffix'):''}</option>)}
               </select>
-              {field?.options?.length ? <p style={small}>Opciones válidas: {field.options.map(o=>`${o.label} → ${o.value}`).join(' · ')}</p>:null}
+              {field?.options?.length ? <p style={small}>{t("validOptions",{options:field.options.map(o=>`${o.label} → ${o.value}`).join(" · ")})}</p>:null}
               {rule && (field?.type==='SELECT' || field?.type==='MULTI_SELECT') &&
-                <div style={{marginTop:8}}><label style={labelStyle}>Sustituciones (JSON de respuesta de Meta → valor de Twenty)</label>
+                <div style={{marginTop:8}}><label style={labelStyle}>{t("replacementsLabel")}</label>
                 <textarea rows={3} style={{...inputStyle,fontFamily:'monospace'}} defaultValue={JSON.stringify(rule.replacements??{},null,2)}
                   key={`${selectedForm.id}:${question.key}:${rule.target}`}
-                  onBlur={e=>{try {const value=JSON.parse(e.target.value) as Record<string,string>;patchForm(selectedForm.id,{mappings:selectedForm.mappings.map(r=>r.questionKey===question.key?{...r,replacements:value}:r)});setStatus('Sustituciones editadas; pulsa Guardar mapeo.');}catch{setStatus('Error: JSON de sustituciones inválido');}}} />
+                  onBlur={e=>{try {const value=JSON.parse(e.target.value) as Record<string,string>;patchForm(selectedForm.id,{mappings:selectedForm.mappings.map(r=>r.questionKey===question.key?{...r,replacements:value}:r)});setStatus(t('mappingChangesUnsaved'));}catch{setStatusError(true);setStatus(t('errorPrefix',{reason:t('invalidReplacementJson')}));}}} />
                 </div>}
             </div>;
           })}
-          <Button styles={styles} primary disabled={busy||!selectedFields.length} onClick={save}>Guardar mapeo de este workspace</Button>
+          <Button styles={styles} primary disabled={busy||!selectedFields.length} onClick={save}>{t("saveMapping")}</Button>
         </section>}
       </>}
       {screen==='sync' && <>
-        <Subhead styles={styles} title="Sincronización e historial" description="El cron revisa cada minuto, pero ejecuta un formulario por vez. Los límites de Meta pausan las solicitudes de este workspace." />
+        <Subhead styles={styles} title={t("syncTitle")} description={t("syncDescription")} />
         <section style={spacing}>
-          <label style={{display:'block',...labelStyle}}>Intervalo automático</label>
+          <label style={{display:'block',...labelStyle}}>{t("automaticInterval")}</label>
           <select style={{...inputStyle,maxWidth:260}} value={config.intervalMinutes} onChange={e=>setConfig(c=>c?{...c,intervalMinutes:Number(e.target.value) as WorkspaceConfig['intervalMinutes']}:c)}>
-            {[1,2,5,10,15,30,60].map(n=><option value={n} key={n}>Cada {n} minuto{n===1?'':'s'}</option>)}
+            {[1,2,5,10,15,30,60].map(n=><option value={n} key={n}>{t('everyMinutes',{minutes:n})}</option>)}
           </select>
-          <div><Button styles={styles} onClick={save} disabled={busy}>Guardar frecuencia</Button></div>
+          <div><Button styles={styles} onClick={save} disabled={busy}>{t("saveFrequency")}</Button></div>
         </section>
         {quotaPause && <section role="alert" style={{...spacing,background:theme.errorSurface,color:theme.errorText,borderColor:theme.errorBorder}}>
-          Meta ha limitado temporalmente las solicitudes. Pausa hasta {new Date(quotaPause.pausedUntil).toLocaleString()} (hora local).
-          No se realizarán peticiones antes de esa hora. Actualiza el estado después.
+          {t("quotaPause",{until:formatDate(quotaPause.pausedUntil)})}
+          {t("quotaAdvice")}
         </section>}
         <section style={spacing}>
-          <label style={{display:'block',...labelStyle}}>Formulario para sincronizar</label>
+          <label style={{display:'block',...labelStyle}}>{t("selectSyncFormLabel")}</label>
           <select style={inputStyle} value={syncFormId} onChange={e=>setSyncFormId(e.target.value)}>
-            <option value="">Selecciona un formulario (uno por ejecución)</option>
+            <option value="">{t("selectSyncForm")}</option>
             {forms.filter(f=>f.enabled).map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
-          <label style={{display:'flex',gap:8,marginTop:9,fontSize:13}}><input style={checkStyle} type="checkbox" checked={retryReview} onChange={e=>setRetryReview(e.target.checked)}/>Reprocesar también entradas NEEDS_REVIEW (tras corregir el mapeo)</label>
-          <Button styles={styles} primary disabled={busy||!syncFormId||!!quotaPause} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),retryReview}),'Trabajo de sincronización encolado. Consulta el historial después de actualizar.')}>Sincronizar ahora</Button>
-          <Button styles={styles} disabled={busy||!syncFormId||!!quotaPause} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),historical:true,retryReview}),'Importación histórica encolada (hasta 90 días).')}>Importar histórico (90 días)</Button>
-          <Button styles={styles} disabled={busy} onClick={()=>void run(async()=>{},'Estado e historial actualizados.')}>Actualizar estado</Button>
-          {quotaPause && <div style={{marginTop:12}}><Button styles={styles} disabled={busy||!syncFormId} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{formId:syncFormId,forceOnce:true,retryReview}),'Prueba forzada encolada (hasta 25 leads).')}>Forzar prueba (máx. 25 leads)</Button></div>}
+          <label style={{display:'flex',gap:8,marginTop:9,fontSize:13}}><input style={checkStyle} type="checkbox" checked={retryReview} onChange={e=>setRetryReview(e.target.checked)}/>{t("retryReview")}</label>
+          <Button styles={styles} primary disabled={busy||!syncFormId||!!quotaPause} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),retryReview}),t('queued'))}>{t("syncNow")}</Button>
+          <Button styles={styles} disabled={busy||!syncFormId||!!quotaPause} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),historical:true,retryReview}),t('queuedHistorical'))}>{t("syncHistorical")}</Button>
+          <Button styles={styles} disabled={busy} onClick={()=>void run(async()=>{},t('statusRefreshed'))}>{t("refreshStatus")}</Button>
+          {quotaPause && <div style={{marginTop:12}}><Button styles={styles} disabled={busy||!syncFormId} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{formId:syncFormId,forceOnce:true,retryReview}),t('queuedForced'))}>{t("forceTest")}</Button></div>}
         </section>
-        <section style={{...spacing,padding:16}}><button type="button" aria-expanded={!!expanded.states} onClick={()=>toggle('states')} style={{...styles.buttonStyle,margin:0,width:'100%',textAlign:'left'}}>{expanded.states?'▾':'▸'} Estado por formulario · {data?.states.length??0}</button>{expanded.states && <div style={{maxHeight:350,overflowY:'auto',marginTop:12}}>
+        <section style={{...spacing,padding:16}}><button type="button" aria-expanded={!!expanded.states} onClick={()=>toggle('states')} style={{...styles.buttonStyle,margin:0,width:'100%',textAlign:'left'}}>{expanded.states?'▾':'▸'} {t('statesHeading',{count:data?.states.length??0})}</button>{expanded.states && <div style={{maxHeight:350,overflowY:'auto',marginTop:12}}>
           {data?.states.length?data.states.map(st=><div key={st.formId} style={{borderBottom:'1px solid '+theme.divider,padding:'10px 0'}}>
-            <strong>{forms.find(f=>f.id===st.formId)?.name??st.formId}</strong> · {st.activeRunId?'En curso':'Sin trabajo activo'}
-            <div style={small}>Último éxito: {st.lastSuccessAt?new Date(st.lastSuccessAt).toLocaleString():'Nunca'} · Último intento: {st.lastAttemptAt?new Date(st.lastAttemptAt).toLocaleString():'Nunca'}</div>
-            {st.lastError && <div style={{color:theme.errorText,fontSize:13}}>Error: {st.lastError}</div>}
-          </div>):<p style={small}>No hay formularios configurados.</p>}</div>}
+            <strong>{forms.find(f=>f.id===st.formId)?.name??st.formId}</strong> · {st.activeRunId?t('inProgress'):t('noActiveRun')}
+            <div style={small}>{t("lastSuccessAndAttempt",{success:st.lastSuccessAt?formatDate(st.lastSuccessAt):t("never"),attempt:st.lastAttemptAt?formatDate(st.lastAttemptAt):t("never")})}</div>
+            {st.lastError && <div style={{color:theme.errorText,fontSize:13}}>{t("errorPrefix",{reason:translateBackendError(language,st.lastError)})}</div>}
+          </div>):<p style={small}>{t("noConfiguredForms")}</p>}</div>}
         </section>
-        <section style={{...spacing,padding:16}}><button type="button" aria-expanded={!!expanded.audit} onClick={()=>toggle('audit')} style={{...styles.buttonStyle,margin:0,width:'100%',textAlign:'left'}}>{expanded.audit?'▾':'▸'} Auditoría técnica · {data?.audit?.length??0}</button>{expanded.audit && <div style={{maxHeight:360,overflowY:'auto',marginTop:12}}><p style={small}>Eventos de los últimos 14 días</p>
+        <section style={{...spacing,padding:16}}><button type="button" aria-expanded={!!expanded.audit} onClick={()=>toggle('audit')} style={{...styles.buttonStyle,margin:0,width:'100%',textAlign:'left'}}>{expanded.audit?'▾':'▸'} {t('auditHeading',{count:data?.audit?.length??0})}</button>{expanded.audit && <div style={{maxHeight:360,overflowY:'auto',marginTop:12}}><p style={small}>{t("auditPeriod")}</p>
           <textarea readOnly value={JSON.stringify(data?.audit??[],null,2)} style={{...inputStyle,minHeight:110,maxHeight:240,fontFamily:'monospace',fontSize:11}} />
           {(data?.audit??[]).slice(0,60).map((e,i)=><div key={e.runId+'-'+i} style={{borderBottom:'1px solid '+theme.divider,padding:'7px 0',fontSize:12}}>
-            <strong>{new Date(e.at).toLocaleString()}</strong> · {e.level} · {e.kind} · {forms.find(f=>f.id===e.formId)?.name??e.formId} · Run {e.runId.slice(0,8)}
-            {e.httpStatus!==undefined?' · HTTP '+e.httpStatus:''}{e.metaCode!==undefined?' · Meta '+e.metaCode:''}{e.page!==undefined?' · Lote '+e.page:''}
+            <strong>{formatDate(e.at)}</strong> · {e.level} · {e.kind} · {forms.find(f=>f.id===e.formId)?.name??e.formId} · Run {e.runId.slice(0,8)}
+            {e.httpStatus!==undefined?' · HTTP '+e.httpStatus:''}{e.metaCode!==undefined?' · Meta '+e.metaCode:''}{e.page!==undefined?' · '+t('batchLabel',{batch:e.page}):''}
           </div>)}
-          {!data?.audit?.length&&<p style={small}>Sin eventos de auditoría todavía.</p>}</div>}
+          {!data?.audit?.length&&<p style={small}>{t("noAuditEvents")}</p>}</div>}
         </section>
-        <section style={{...spacing,padding:16}}><button type="button" aria-expanded={!!expanded.history} onClick={()=>toggle('history')} style={{...styles.buttonStyle,margin:0,width:'100%',textAlign:'left'}}>{expanded.history?'▾':'▸'} Últimas ejecuciones · {data?.history?.length??0}</button>{expanded.history && <div style={{maxHeight:360,overflow:'auto',marginTop:12}}>
-          <div style={{overflowX:'auto'}}><table style={{borderCollapse:'collapse',width:'100%',fontSize:13}}><thead><tr>{['Finalizado','Formulario','Estado','Nuevos','Vinculados','Duplicados','Revisión','Fallidos'].map(x=><th key={x} style={{textAlign:'left',padding:7,borderBottom:'1px solid '+theme.border,color:theme.textMuted}}>{x}</th>)}</tr></thead>
-          <tbody>{(data?.history??[]).map(evt=><tr key={evt.runId}>{[new Date(evt.finishedAt).toLocaleString(),evt.formName,evt.status,evt.stats.imported,evt.stats.linked,evt.stats.duplicate,evt.stats.review,evt.stats.failed].map((x,i)=><td key={i} style={{padding:7,borderBottom:'1px solid '+theme.divider,color:theme.text}}>{x}</td>)}</tr>)}</tbody></table></div>
-          {!data?.history.length&&<p style={small}>Todavía no se ha completado ninguna sincronización.</p>}
-          {data?.history.filter(e=>e.reason).slice(0,5).map(e=><p key={e.runId} style={{fontSize:12,color:theme.errorText}}>{e.formName}: {e.reason}</p>)}</div>}
+        <section style={{...spacing,padding:16}}><button type="button" aria-expanded={!!expanded.history} onClick={()=>toggle('history')} style={{...styles.buttonStyle,margin:0,width:'100%',textAlign:'left'}}>{expanded.history?'▾':'▸'} {t('historyHeading',{count:data?.history?.length??0})}</button>{expanded.history && <div style={{maxHeight:360,overflow:'auto',marginTop:12}}>
+          <div style={{overflowX:'auto'}}><table style={{borderCollapse:'collapse',width:'100%',fontSize:13}}><thead><tr>{[t('historyCompletedAt'),t('historyForm'),t('historyStatus'),t('historyImported'),t('historyLinked'),t('historyDuplicates'),t('historyReview'),t('historyFailed')].map(x=><th key={x} style={{textAlign:'left',padding:7,borderBottom:'1px solid '+theme.border,color:theme.textMuted}}>{x}</th>)}</tr></thead>
+          <tbody>{(data?.history??[]).map(evt=><tr key={evt.runId}>{[formatDate(evt.finishedAt),evt.formName,evt.status,evt.stats.imported,evt.stats.linked,evt.stats.duplicate,evt.stats.review,evt.stats.failed].map((x,i)=><td key={i} style={{padding:7,borderBottom:'1px solid '+theme.divider,color:theme.text}}>{x}</td>)}</tr>)}</tbody></table></div>
+          {!data?.history.length&&<p style={small}>{t("historyEmpty")}</p>}
+          {data?.history.filter(e=>e.reason).slice(0,5).map(e=><p key={e.runId} style={{fontSize:12,color:theme.errorText}}>{e.formName}: {translateBackendError(language,e.reason??"")}</p>)}</div>}
         </section>
       </>}
 
