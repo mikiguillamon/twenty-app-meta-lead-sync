@@ -114,7 +114,7 @@ export function AdminPanel({screen}:{screen:Screen}) {
         <section style={spacing}>
           <h4 style={{marginTop:0,color:theme.text}}>System User Token (recomendado)</h4>
           <div role="status" style={{...small,padding:12,borderRadius:8,marginBottom:12,border:'1px solid '+(data?.credentials.systemConfigured?theme.successBorder:theme.border),background:data?.credentials.systemConfigured?theme.successSurface:theme.control,color:data?.credentials.systemConfigured?theme.successText:theme.textMuted}}>
-            {data?.credentials.systemConfigured?'✓ Token guardado · Puedes reemplazarlo cuando quieras.':'○ Sin token · Añade uno para conectar con Meta.'}
+            {data?.credentials.systemConfigured?'✓ Token guardado':'○ Sin token · Añade uno para conectar con Meta.'}
           </div>
           <label style={labelStyle}>System User Token</label>
           <input type="password" value={systemToken} onChange={e=>setSystemToken(e.target.value)} placeholder="EA…" autoComplete="off" style={inputStyle} />
@@ -127,7 +127,7 @@ export function AdminPanel({screen}:{screen:Screen}) {
           <div role="status" style={{...small,padding:12,borderRadius:8,marginBottom:12,border:'1px solid '+(data?.credentials.pageTokensConfigured?theme.successBorder:theme.border),background:data?.credentials.pageTokensConfigured?theme.successSurface:theme.control,color:data?.credentials.pageTokensConfigured?theme.successText:theme.textMuted}}>
             {data?.credentials.pageTokensConfigured?'✓ Tokens adicionales guardados':'○ Sin tokens adicionales · Opcional'}
           </div>
-          <label style={labelStyle}>JSON confidencial: ID de página → token</label>
+          <label style={labelStyle}>JSON: ID de página → token</label>
           <textarea rows={4} value={pageTokenJson} onChange={e=>setPageTokenJson(e.target.value)} placeholder={'{"123456789012345":"EA…"}'} spellCheck={false} style={{...inputStyle,fontFamily:'monospace'}} />
           <Button styles={styles} disabled={busy||!pageTokenJson.trim()} onClick={validationThenSavePages}>Validar todas y reemplazar tokens</Button>
           <Button styles={styles} disabled={busy||!data?.credentials.pageTokensConfigured} onClick={()=>clearToken('META_PAGE_TOKENS_JSON')}>Eliminar Page Tokens</Button>
@@ -147,21 +147,21 @@ export function AdminPanel({screen}:{screen:Screen}) {
               <input style={checkStyle} type="checkbox" checked={page.enabled} onChange={e=>patchPage(page.id,e.target.checked)} />
               <span><strong>{page.name}</strong><span style={{display:'block',...small}}>Page ID: {page.id}</span></span>
             </label>
-            <Button styles={styles} disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-forms',{pageId:page.id}),`Formularios de ${page.name} actualizados.`)}>Buscar formularios</Button>
+            <Button styles={styles} disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-forms',{pageId:page.id}),`Formularios de ${page.name} actualizados.`)}>Actualizar formularios</Button>
           </section>)}
       </>}
       {screen==='forms' && <>
         <Subhead styles={styles} title="Formularios de captación" description="Cada formulario se activa por separado. Los formularios de una misma página pueden tener asignaciones diferentes." />
-        <Button styles={styles} disabled={busy} primary onClick={save}>Guardar formularios activos</Button>
+        <div style={{marginBottom:18}}><Button styles={styles} disabled={busy} primary onClick={save}>Guardar formularios activos</Button></div>
         {forms.length>0 && <section style={{...spacing,padding:14}}><label style={labelStyle}>Buscar formularios</label><input type="search" style={inputStyle} value={formSearch} onChange={e=>setFormSearch(e.target.value)} placeholder="Nombre, ID o página..." /><p style={{...small,margin:'8px 0 0'}}>{visibleForms.length} de {forms.length} formularios · {forms.filter(f=>f.enabled).length} activos</p></section>}
-        {forms.length===0 ? <p>No hay formularios. Ve a Páginas y pulsa Buscar formularios.</p> : visibleForms.length===0 ? <p style={small}>No hay formularios que coincidan.</p> : visibleForms.map(form=>
+        {forms.length===0 ? <p>No hay formularios. Ve a Páginas y pulsa Actualizar formularios.</p> : visibleForms.length===0 ? <p style={small}>No hay formularios que coincidan.</p> : visibleForms.map(form=>
           <section key={form.id} style={spacing}>
             <label style={{display:'flex',gap:10,alignItems:'center'}}>
               <input style={checkStyle} type="checkbox" checked={form.enabled} disabled={!pages.some(p=>p.id===form.pageId&&p.enabled)} onChange={e=>patchForm(form.id,{enabled:e.target.checked})} />
               <strong>{form.name}</strong>
             </label>
             <p style={small}>Página: {pages.find(p=>p.id===form.pageId)?.name ?? form.pageId} · ID: {form.id} · {form.status??'sin estado'} · Preguntas: {form.questions.length}</p>
-            <label style={{display:'flex',gap:8,alignItems:'center',fontSize:13,color:theme.text}}><input style={checkStyle} type="checkbox" checked={form.updateExisting===true} onChange={e=>patchForm(form.id,{updateExisting:e.target.checked})} />Actualizar campos de Personas existentes (desactivado por defecto)</label>
+            <label style={{display:'flex',gap:8,alignItems:'center',fontSize:13,color:theme.text}}><input style={checkStyle} type="checkbox" checked={form.updateExisting===true} onChange={e=>patchForm(form.id,{updateExisting:e.target.checked})} />Actualizar campos de Personas existentes</label>
           </section>)}
       </>}
       {screen==='mapping' && <>
