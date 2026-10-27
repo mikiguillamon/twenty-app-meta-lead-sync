@@ -41,7 +41,7 @@ export class MetaGraphClient {
       const limited = isMetaRateLimit(response.status, code);
       if (limited) {
         const until = await registerMetaRateLimit(response, code);
-        throw new MetaGraphError(`Límite de Meta alcanzado. Pausado hasta ${until}`, false, response.status);
+        throw new MetaGraphError(`Límite de Meta alcanzado. Pausado hasta ${until}`, false, response.status, code);
       }
       const retryable = response.status >= 500 || [1, 2, 341].includes(code) || err.is_transient === true;
       const reason = getString(err.message, 160) || `HTTP ${response.status}`;
