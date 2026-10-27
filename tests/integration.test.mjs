@@ -141,3 +141,37 @@ test('successful Person POST with no ID is recovered without duplicate creation'
  await runFormPage(memory.jobs.get(`mls-${job2.runId}-0`),0,3);
  assert.equal(memory.people.size,1);
 });
+
+test('deleted linked Person is recreated once; ledger stays unique and relinks',async()=>{
+ memory.reset();requests=[];errorStatus=0;usePagination=false;await saveConfig(config);
+ let job=await scheduleForm(form);
+ await runFormPage(memory.jobs.get(`mls-${job.runId}-0`),0,3);
+ const oldPerson=[...memory.people.values()][0];
+ assert.equal(memory.ledger.size,1);
+ memory.people.delete(oldPerson.id);
+ job=await scheduleForm(form);
+ await runFormPage(memory.jobs.get(`mls-${job.runId}-0`),0,3);
+ assert.equal(memory.people.size,1);
+ const newPerson=[...memory.people.values()][0];
+ assert.notEqual(newPerson.id,oldPerson.id);
+ assert.equal(memory.ledger.size,1);
+ assert.equal([...memory.ledger.values()][0].personRecordId,newPerson.id);
+ assert.equal((await loadFormState(FORM)).lastResult.imported,1);
+ job=await scheduleForm(form);
+ await runFormPage(memory.jobs.get(`mls-${job.runId}-0`),0,3);
+ assert.equal(memory.people.size,1);
+ assert.equal((await loadFormState(FORM)).lastResult.duplicate,1);
+});
+
+test('processed ledger without linked Person ID remains protected',async()=>{
+ memory.reset();requests=[];errorStatus=0;usePagination=false;await saveConfig(config);
+ let job=await scheduleForm(form);
+ await runFormPage(memory.jobs.get(`mls-${job.runId}-0`),0,3);
+ const ledger=[...memory.ledger.values()][0];
+ ledger.personRecordId='';
+ memory.people.clear();
+ job=await scheduleForm(form);
+ await runFormPage(memory.jobs.get(`mls-${job.runId}-0`),0,3);
+ assert.equal(memory.people.size,0);
+ assert.equal((await loadFormState(FORM)).lastResult.duplicate,1);
+});
