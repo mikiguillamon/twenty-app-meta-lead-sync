@@ -4,7 +4,7 @@ import { IDS } from './constants/ids.ts';
 export default defineApplication({
   universalIdentifier: IDS.APPLICATION,
   displayName: 'Meta Lead Sync',
-  description: 'Sincroniza formularios Meta Lead Ads mediante polling, por workspace, sin cambiar webhooks.',
+  description: 'Sync Meta Lead Ads to Twenty People with per-workspace polling and field mapping, without changing webhooks.',
   author: 'Just For Fun 360, S.L.',
   category: 'Sales',
   logo: 'public/logo.svg',
