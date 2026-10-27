@@ -7,7 +7,8 @@ export const isRunActive = (state: FormRuntimeState, nowMs: number): boolean =>
 export const secondsForSync = (lastSuccessAt: string | undefined, nowMs: number, historical: boolean): { sinceSec: number; untilSec: number } => {
   const nowSec = Math.floor(nowMs / 1000);
   const earliest = nowSec - 90 * 86400;
-  const baseline = historical || !lastSuccessAt ? earliest : Math.floor(Date.parse(lastSuccessAt) / 1000) - 300;
+  // First ordinary poll covers only the last 24 hours; historical import remains explicit (90 days).
+  const baseline = historical ? earliest : !lastSuccessAt ? nowSec - 86400 : Math.floor(Date.parse(lastSuccessAt) / 1000) - 300;
   return { sinceSec: Math.max(earliest, Number.isFinite(baseline) ? baseline : earliest), untilSec: nowSec };
 };
 export const sumCounters = (a: SyncCounters, b: SyncCounters): SyncCounters => ({
