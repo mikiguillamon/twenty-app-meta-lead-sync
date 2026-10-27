@@ -111,9 +111,13 @@ export async function saveWorkspaceConfig(body: unknown): Promise<{ config: Work
 }
 export async function manualSync(body: unknown) {
   const input = getObject(body);
-  const forceOnce = input.forceOnce === true && input.confirmForce === true && input.historical !== true;
-  if (input.forceOnce === true && !forceOnce) throw new Error('La sincronización forzada exige confirmación y no permite histórico.');
-  if (!forceOnce) await assertMetaQuotaAvailable();
+  const forceOnce = input.forceOnce === true;
+  if (forceOnce) {
+    if (input.historical === true) throw new Error('La prueba forzada no permite histórico.');
+    if (!await getActiveMetaQuota()) throw new Error('La prueba forzada solo está disponible durante una pausa de Meta.');
+  } else {
+    await assertMetaQuotaAvailable();
+  }
   const config = await loadConfig();
   const chosen = input.formId === undefined ? undefined : requireMetaId(input.formId);
   const forms = config.forms.filter(f => f.enabled && config.pages.some(p => p.id === f.pageId && p.enabled) && (!chosen || f.id === chosen));
