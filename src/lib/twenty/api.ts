@@ -51,11 +51,54 @@ export async function findMatchingPerson(email?: string, phone?: string): Promis
   if (phone) { const existing = await findOneBy('phones.primaryPhoneNumber', phone); if (existing) return existing; }
   return undefined;
 }
-export async function createPerson(draft: PersonDraft): Promise<string> {
-  const response = await newClient().post('/rest/people', draft);
-  const id = personId(getObject(response).data) ?? personId(getObject(response).person) ?? personId(response);
-  if (!id) throw new Error('Twenty no devolvió el ID de la Persona creada');
-  return id;
+/** The REST creation result is not guaranteed to use the same response envelope as a GET. */
+export function createdPersonId(response: unknown): string | undefined {
+  const root = getObject(response);
+  const data = getObject(root.data);
+  for (const item of [
+    root, data, root.person, data.person, root.createPerson, data.createPerson,
+    root.record, data.record, getObject(data.createPerson).data,
+  ]) {
+    const id = personId(item);
+    if (id) return id;
+  }
+  return undefined;
+}
+
+/** A POST may have committed even if Twenty returns no readable ID or the response is lost. */
+export class PersonCreationUncertainError extends Error {
+  constructor() {
+    super('Twenty podría haber creado la Persona, pero no se pudo confirmar su ID. Revisión requerida para evitar duplicados.');
+    this.name = 'PersonCreationUncertainError';
+  }
+}
+
+export async function createPerson(
+  draft: PersonDraft,
+  email?: string,
+  phone?: string,
+): Promise<string> {
+  let response: unknown;
+  try {
+    response = await newClient().post('/rest/people', draft);
+  } catch (error) {
+    // Explicit client-side validation/authorization failures do not represent a committed write.
+    // Timeouts, server failures and conflicts are ambiguous: never create the Person twice.
+    const status = getObject(error).status;
+    if (typeof status === 'number' && status >= 400 && status < 500 &&
+        ![408, 409, 429].includes(status)) throw error;
+    const recovered = await findMatchingPerson(email, phone).catch(() => undefined);
+    if (recovered) return recovered;
+    throw new PersonCreationUncertainError();
+  }
+
+  const id = createdPersonId(response);
+  if (id) return id;
+  // Twenty 2.50 installations can reply 2xx with an envelope that has no person ID.
+  // Re-read by already validated identifiers instead of treating the successful POST as failed.
+  const recovered = await findMatchingPerson(email, phone).catch(() => undefined);
+  if (recovered) return recovered;
+  throw new PersonCreationUncertainError();
 }
 export async function updatePerson(id: string, data: PersonDraft): Promise<void> {
   await newClient().patch(`/rest/people/${encodeURIComponent(id)}`, data);
