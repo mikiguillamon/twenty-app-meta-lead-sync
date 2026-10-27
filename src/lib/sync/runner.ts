@@ -82,11 +82,23 @@ export async function runFormPage(job: FormJob, retryCount: number, maxRetries: 
     // Heartbeat: a long historical scan may exceed the initial lease. Renew on each page.
     await saveFormState(form.id, { ...state, activeStartedAt: new Date().toISOString() });
     const fields = await getWritablePersonFields();
-    const token = await resolvePageToken(form.pageId, {
-      systemToken: process.env.META_SYSTEM_USER_TOKEN,
-      pageTokens: parsePageTokens(process.env.META_PAGE_TOKENS_JSON),
-    }, graph);
-    const result = await graph.leadsPage(form.id, token, session.sinceSec, session.untilSec, job.after);
+    const directPageToken = parsePageTokens(process.env.META_PAGE_TOKENS_JSON)[form.pageId];
+    const systemToken = process.env.META_SYSTEM_USER_TOKEN;
+    // A system-user token assigned to the Page can read Lead Ads directly.
+    // Avoid re-fetching all managed Pages for every 25-lead batch.
+    const token = directPageToken || systemToken;
+    if (!token) throw new Error('Falta un token de Meta para esta página.');
+    let result;
+    try {
+      result = await graph.leadsPage(form.id, token, session.sinceSec, session.untilSec, job.after);
+    } catch (e) {
+      // Only an explicit access-token/permission error justifies resolving a Page token.
+      // Never add more requests on throttling, network failures or Graph errors 4/613.
+      if (directPageToken || !systemToken || !(e instanceof MetaGraphError) ||
+          ![10, 190, 200].includes(e.code)) throw e;
+      const pageToken = await resolvePageToken(form.pageId, { systemToken }, graph);
+      result = await graph.leadsPage(form.id, pageToken, session.sinceSec, session.untilSec, job.after);
+    }
     const checkpoint = session.pageCheckpoint?.page === job.page
       ? session.pageCheckpoint : { page: job.page, outcomes: {} as Record<string, 'imported'|'linked'|'duplicate'|'review'> };
     for (const lead of result.leads) {

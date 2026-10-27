@@ -38,6 +38,7 @@ test('end-to-end: schedule, process, deduplicate and persist per-form history wi
   const payload=memory.jobs.get(`mls-${scheduled.runId}-0`);
   assert.equal((await runFormPage(payload,0,3)).done,true);
   assert.equal(memory.people.size,1);
+  assert.equal(requests.filter(q=>new URL(q.url).pathname.endsWith('/me/accounts')).length,0,'sync must not list Pages on every batch');
   assert.equal(memory.ledger.size,1);
   const person=[...memory.people.values()][0];
   assert.deepEqual(person.name,{firstName:'ANA',lastName:'MARIN PEREZ'});

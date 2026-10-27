@@ -7,8 +7,9 @@ export type GraphEdge<T> = { data: T[]; paging?: { cursors?: { after?: string };
 export class MetaGraphError extends Error {
   readonly retryable: boolean;
   readonly status: number;
-  constructor(message: string, retryable: boolean, status: number) {
-    super(message); this.name = 'MetaGraphError'; this.retryable = retryable; this.status = status;
+  readonly code: number;
+  constructor(message: string, retryable: boolean, status: number, code = 0) {
+    super(message); this.name = 'MetaGraphError'; this.retryable = retryable; this.status = status; this.code = code;
   }
 }
 export type DiscoveredForm = { id: string; name: string; pageId: string; status?: string; questions: MetaQuestion[] };
@@ -44,7 +45,7 @@ export class MetaGraphClient {
       }
       const retryable = response.status >= 500 || [1, 2, 341].includes(code) || err.is_transient === true;
       const reason = getString(err.message, 160) || `HTTP ${response.status}`;
-      throw new MetaGraphError(`Meta Graph ${response.status} (${code || 'HTTP'}): ${safeError(new Error(reason))}`, retryable, response.status);
+      throw new MetaGraphError(`Meta Graph ${response.status} (${code || 'HTTP'}): ${safeError(new Error(reason))}`, retryable, response.status, code);
     }
     await observeMetaUsage(response);
     return json as T;

@@ -8,7 +8,7 @@ import { getWritablePersonFields } from '../twenty/api.ts';
 import { loadConfig, saveConfig, mergeDiscoveredPages, mergeDiscoveredForms, loadFormState, loadHistory } from './state.ts';
 import { MetaGraphClient, discoverPages, parsePageTokens, resolvePageToken } from '../meta/graph.ts';
 import { scheduleForm } from './runner.ts';
-import { assertMetaQuotaAvailable } from '../meta/rate-limit.ts';
+import { assertMetaQuotaAvailable, getActiveMetaQuota } from '../meta/rate-limit.ts';
 
 const graph = new MetaGraphClient();
 export async function assertAdmin(): Promise<void> {
@@ -35,7 +35,7 @@ export async function dashboard() {
   let fields: PersonField[] = [];
   let metadataError: string | undefined;
   try { fields = await getWritablePersonFields(); } catch (e) { metadataError = e instanceof Error ? e.message.slice(0,180) : 'Metadata no disponible'; }
-  return { config, states, history: await loadHistory(config.forms.map(f => f.id)), fields, metadataError, credentials: {
+  return { config, states, quota: await getActiveMetaQuota(), history: await loadHistory(config.forms.map(f => f.id)), fields, metadataError, credentials: {
     systemConfigured: !!process.env.META_SYSTEM_USER_TOKEN,
     pageTokensConfigured: !!process.env.META_PAGE_TOKENS_JSON,
   }};
