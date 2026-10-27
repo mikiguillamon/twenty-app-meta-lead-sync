@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { en, es, translate, isLanguage, readPreferredLanguage, writePreferredLanguage, translateBackendError } from '../src/front-components/i18n.ts';
+import { en, es, translate, isLanguage, isLanguageMode, languageFromTwentyLocale, resolveLanguage, readLanguageMode, writeLanguageMode, translateBackendError } from '../src/front-components/i18n.ts';
 
 test('both translation catalogs have identical keys and interpolation placeholders', () => {
  assert.deepEqual(Object.keys(es).sort(),Object.keys(en).sort());
@@ -10,14 +10,27 @@ test('both translation catalogs have identical keys and interpolation placeholde
    assert.deepEqual(placeholders(en[key]),placeholders(es[key]),key);
  }
 });
-test('English is the default, language is stored per user by Twenty app storage', () => {
+test('Twenty host locale is the automatic default and changes dynamically', () => {
  const values=new Map();
  const store={getItem:key=>values.get(key)??null,setItem:(key,value)=>values.set(key,value)};
- assert.equal(readPreferredLanguage(store),'en');
- writePreferredLanguage(store,'es');
- assert.equal(readPreferredLanguage(store),'es');
+ assert.equal(readLanguageMode(store),'auto');
+ assert.equal(resolveLanguage('es-ES',readLanguageMode(store)),'es');
+ assert.equal(resolveLanguage('en-US',readLanguageMode(store)),'en');
+ assert.equal(resolveLanguage('fr-FR',readLanguageMode(store)),'en');
+ assert.equal(languageFromTwentyLocale('es_MX'),'es');
+ writeLanguageMode(store,'en');
+ assert.equal(resolveLanguage('es-ES',readLanguageMode(store)),'en');
+ writeLanguageMode(store,'auto');
+ assert.equal(resolveLanguage('es-ES',readLanguageMode(store)),'es');
  assert.equal(isLanguage('fr'),false);
+ assert.equal(isLanguageMode('auto'),true);
  assert.equal(translate('en','pagesCounter',{visible:2,total:43,active:1}),'2 of 43 Pages · 1 active');
+});
+
+test('legacy manual preference does not block automatic Twenty language after upgrade',()=>{
+ const store={getItem:key=>key==='meta-lead-sync:language'?'en':null,setItem:()=>{}};
+ assert.equal(readLanguageMode(store),'auto');
+ assert.equal(resolveLanguage('es-ES',readLanguageMode(store)),'es');
 });
 test('known backend errors are localized without rewriting arbitrary messages', () => {
  assert.equal(translateBackendError('en','Otro trabajo está importando este lead; se reintentará.'),en.backendImportInProgress);
