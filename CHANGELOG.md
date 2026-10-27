@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.8 — 2026-10-27
+
+- Búsqueda por nombre e identificador en páginas y formularios, contadores de elementos activos y visibles.
+- Indicadores de credenciales guardadas más claros en Conexiones y textos redundantes eliminados.
+- Fuerza de prueba visible solo cuando existe pausa de Meta; el servidor exige también que esa pausa esté activa. Se mantiene el límite de 25 leads y sin histórico.
+- Paneles de estado, auditoría e historial plegables, con scroll interno limitado.
+- Sin cambios en el sistema de deduplicación ni credenciales.
+
 ## 0.1.7 — 2026-10-27
 
 - La sincronización comprueba si la Persona vinculada a un ledger PROCESSED sigue existiendo (GET /rest/people/:id).
