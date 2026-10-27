@@ -47,7 +47,9 @@ export function AdminPanel({screen}:{screen:Screen}) {
   const [mappingFormId,setMappingFormId] = useState<string>('');
   const [syncFormId,setSyncFormId] = useState<string>('');
   const [retryReview,setRetryReview] = useState(false);
-  const [confirmForce,setConfirmForce] = useState(false);
+  const [pageSearch,setPageSearch] = useState('');
+  const [formSearch,setFormSearch] = useState('');
+  const [expanded,setExpanded] = useState<Record<string,boolean>>({});
   const refresh = useCallback(async () => {
     const result = await api.get('/s/meta-sync/state') as AdminData;
     setData(result); setConfig(result.config);
@@ -92,31 +94,39 @@ export function AdminPanel({screen}:{screen:Screen}) {
   const quotaPause = data?.quota && Date.parse(data.quota.pausedUntil)>Date.now() ? data.quota : null;
   const forms = config?.forms ?? [];
   const pages = config?.pages ?? [];
+  const filterItems = (content:string,query:string) => query.toLocaleLowerCase().trim().split(/\s+/).every(word=>content.toLocaleLowerCase().includes(word));
+  const visiblePages = pages.filter(p=>filterItems(p.name+' '+p.id,pageSearch));
+  const visibleForms = forms.filter(f=>filterItems(f.name+' '+f.id+' '+(pages.find(p=>p.id===f.pageId)?.name??''),formSearch));
+  const toggle = (key:string) => setExpanded(v=>({...v,[key]:!v[key]}));
   const selectedForm = forms.find(f=>f.id===mappingFormId);
   const selectedFields = data?.fields ?? [];
 
   return <div style={{maxWidth:940,width:'100%',padding:'8px 12px 24px',boxSizing:'border-box',fontFamily:'inherit',lineHeight:1.5,color:theme.text,colorScheme:theme.colorScheme}}>
     <div style={{display:'flex',alignItems:'baseline',gap:10,flexWrap:'wrap',marginBottom:14}}>
       <h2 style={{fontSize:22,margin:0,color:theme.text}}>Meta Lead Sync</h2>
-      <span style={small}>Beta privada · Twenty 2.50 · configuración exclusiva de este workspace</span>
+
     </div>
     {data?.metadataError && <p role="alert" style={{color:theme.errorText}}>No se pudieron cargar todos los campos personalizados: {data.metadataError}</p>}
     {status && <div role="status" style={{...spacing,background:status.startsWith('Error')?theme.errorSurface:theme.successSurface,color:status.startsWith('Error')?theme.errorText:theme.successText,borderColor:status.startsWith('Error')?theme.errorBorder:theme.successBorder,padding:12}}>{status}</div>}
     {!config ? <div style={spacing}>Cargando configuración y verificando permisos…</div> : <>
       {screen==='connections' && <>
-        <Subhead styles={styles} title="Conexión con Meta" description="Introduce las credenciales de tu workspace. Nunca aparecen en el historial ni se guardan en KV." />
+        <Subhead styles={styles} title="Conexión con Meta" />
         <section style={spacing}>
           <h4 style={{marginTop:0,color:theme.text}}>System User Token (recomendado)</h4>
-          <p style={small}>Estado: {data?.credentials.systemConfigured?'Configurado':'Sin configurar'}. Se resuelven Page Access Tokens de /me/accounts para cada ejecución.</p>
+          <div role="status" style={{...small,padding:12,borderRadius:8,marginBottom:12,border:'1px solid '+(data?.credentials.systemConfigured?theme.successBorder:theme.border),background:data?.credentials.systemConfigured?theme.successSurface:theme.control,color:data?.credentials.systemConfigured?theme.successText:theme.textMuted}}>
+            {data?.credentials.systemConfigured?'✓ Token guardado · Puedes reemplazarlo cuando quieras.':'○ Sin token · Añade uno para conectar con Meta.'}
+          </div>
           <label style={labelStyle}>System User Token</label>
           <input type="password" value={systemToken} onChange={e=>setSystemToken(e.target.value)} placeholder="EA…" autoComplete="off" style={inputStyle} />
           <Button styles={styles} primary disabled={busy||!systemToken} onClick={validationThenSaveSystem}>Validar con Meta y guardar cifrado</Button>
           <Button styles={styles} disabled={busy||!data?.credentials.systemConfigured} onClick={()=>clearToken('META_SYSTEM_USER_TOKEN')}>Eliminar token</Button>
-          <p style={small}>Puedes cambiar el token pegando uno nuevo. No lo incluyas en commits o logs.</p>
+          
         </section>
         <section style={spacing}>
           <h4 style={{marginTop:0,color:theme.text}}>Page Access Tokens (opcional)</h4>
-          <p style={small}>Estado: {data?.credentials.pageTokensConfigured?'JSON configurado':'Sin configurar'}. Para páginas sin acceso mediante System User Token. Al guardar se reemplaza el JSON anterior completo.</p>
+          <div role="status" style={{...small,padding:12,borderRadius:8,marginBottom:12,border:'1px solid '+(data?.credentials.pageTokensConfigured?theme.successBorder:theme.border),background:data?.credentials.pageTokensConfigured?theme.successSurface:theme.control,color:data?.credentials.pageTokensConfigured?theme.successText:theme.textMuted}}>
+            {data?.credentials.pageTokensConfigured?'✓ Tokens adicionales guardados':'○ Sin tokens adicionales · Opcional'}
+          </div>
           <label style={labelStyle}>JSON confidencial: ID de página → token</label>
           <textarea rows={4} value={pageTokenJson} onChange={e=>setPageTokenJson(e.target.value)} placeholder={'{"123456789012345":"EA…"}'} spellCheck={false} style={{...inputStyle,fontFamily:'monospace'}} />
           <Button styles={styles} disabled={busy||!pageTokenJson.trim()} onClick={validationThenSavePages}>Validar todas y reemplazar tokens</Button>
@@ -206,8 +216,7 @@ export function AdminPanel({screen}:{screen:Screen}) {
           <Button styles={styles} primary disabled={busy||!syncFormId||!!quotaPause} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),retryReview}),'Trabajo de sincronización encolado. Consulta el historial después de actualizar.')}>Sincronizar ahora</Button>
           <Button styles={styles} disabled={busy||!syncFormId||!!quotaPause} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),historical:true,retryReview}),'Importación histórica encolada (hasta 90 días).')}>Importar histórico (90 días)</Button>
           <Button styles={styles} disabled={busy} onClick={()=>void run(async()=>{},'Estado e historial actualizados.')}>Actualizar estado</Button>
-          <label style={{display:'flex',gap:8,marginTop:12,fontSize:13}}><input style={checkStyle} type="checkbox" checked={confirmForce} onChange={e=>setConfirmForce(e.target.checked)}/>Confirmo que quiero saltar una vez la pausa local de Meta. Meta puede seguir rechazando la petición. Máximo un lote; sin histórico.</label>
-          <Button styles={styles} disabled={busy||!syncFormId||!confirmForce} onClick={()=>void run(async()=>{await api.post('/s/meta-sync/manual',{formId:syncFormId,forceOnce:true,confirmForce:true,retryReview});setConfirmForce(false);},'Prueba forzada encolada (un solo lote).')}>Forzar prueba (máx. 25 leads)</Button>
+          {quotaPause && <div style={{marginTop:12}}><Button styles={styles} disabled={busy||!syncFormId} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{formId:syncFormId,forceOnce:true,retryReview}),'Prueba forzada encolada (hasta 25 leads).')}>Forzar prueba (máx. 25 leads)</Button></div>}
         </section>
         <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Estado por formulario</h4>
           {data?.states.length?data.states.map(st=><div key={st.formId} style={{borderBottom:'1px solid '+theme.divider,padding:'10px 0'}}>
@@ -232,7 +241,7 @@ export function AdminPanel({screen}:{screen:Screen}) {
           {data?.history.filter(e=>e.reason).slice(0,5).map(e=><p key={e.runId} style={{fontSize:12,color:theme.errorText}}>{e.formName}: {e.reason}</p>)}
         </section>
       </>}
-      <p style={{...small,marginTop:18}}>Los tokens se almacenan en variables cifradas de Twenty. Las respuestas a formularios contienen datos personales; controla los permisos y la retención antes de producción.</p>
+
     </>}
   </div>;
 }
