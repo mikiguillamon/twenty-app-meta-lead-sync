@@ -21,12 +21,12 @@ export class MetaGraphClient {
     if (!/^v\d+\.\d+$/.test(apiVersion)) throw new Error('Versión de Meta inválida');
     this.request = request; this.apiVersion = apiVersion;
   }
-  private async get<T>(path: string, token: string, query: Record<string, string> = {}): Promise<T> {
+  private async get<T>(path: string, token: string, query: Record<string, string> = {}, bypassLocalPause = false): Promise<T> {
     if (!token || token.length < 20) throw new MetaGraphError('Falta un Page/System Token válido.', false, 401);
     if (!/^\/(me\/accounts|[0-9]+(?:\/leadgen_forms|\/leads)?)$/.test(path)) throw new Error('Ruta Graph API prohibida');
     const url = new URL(`https://graph.facebook.com/${this.apiVersion}${path}`);
     for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
-    await assertMetaQuotaAvailable();
+    if (!bypassLocalPause) await assertMetaQuotaAvailable();
     let response: Response;
     try {
       response = await this.request(url.toString(), {
@@ -88,7 +88,7 @@ export class MetaGraphClient {
       return { id: requireMetaId(row.id), pageId, name: getString(row.name, 180) || 'Formulario sin nombre', status: getString(row.status, 50), questions };
     });
   }
-  async leadsPage(formId: string, token: string, sinceSec: number, untilSec: number, after?: string): Promise<{ leads: MetaLead[]; after?: string }> {
+  async leadsPage(formId: string, token: string, sinceSec: number, untilSec: number, after?: string, bypassLocalPause = false): Promise<{ leads: MetaLead[]; after?: string }> {
     if (!Number.isSafeInteger(sinceSec) || !Number.isSafeInteger(untilSec) || sinceSec > untilSec) throw new Error('Rango temporal inválido');
     if (after && (typeof after !== 'string' || after.length > 2048)) throw new Error('Cursor de Meta inválido');
     const filtering = JSON.stringify([
@@ -97,7 +97,7 @@ export class MetaGraphClient {
     ]);
     const result = await this.get<GraphEdge<MetaLead>>(`/${requireMetaId(formId)}/leads`, token, {
       fields: 'id,created_time,field_data,form_id', limit: '25', filtering, ...(after ? { after } : {}),
-    });
+    }, bypassLocalPause);
     if (!Array.isArray(result.data)) throw new MetaGraphError('Meta devolvió leads inválidos.', false, 502);
     const next = result.paging?.next ? result.paging?.cursors?.after : undefined;
     if (result.paging?.next && !next) throw new MetaGraphError('Falta cursor after de Meta.', true, 502);
