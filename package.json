@@ -1,6 +1,6 @@
 {
   "name": "twenty-app-meta-lead-sync-jff",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "Private beta: per-workspace Meta Lead Ads polling integration for Twenty CRM",
   "license": "MIT",

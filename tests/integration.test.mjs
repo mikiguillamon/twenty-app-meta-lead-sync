@@ -26,7 +26,7 @@ globalThis.fetch=async (url, options)=>{
 };
 const {scheduleForm,runFormPage}=await import('../src/lib/sync/runner.ts');
 const {saveConfig,loadFormState,loadHistory,loadSession}=await import('../src/lib/sync/state.ts');
-const {RetryableLogicFunctionError}=await import('twenty-sdk/logic-function');
+const {getActiveMetaQuota}=await import('../src/lib/meta/rate-limit.ts');
 const form={id:FORM,pageId:PAGE,name:'Form QA',enabled:true,questions:[{key:'full_name',label:'Nombre'},{key:'email',label:'Email'},{key:'campaign',label:'Campaign'}],
   mappings:[{questionKey:'full_name',target:'name.fullName'},{questionKey:'email',target:'emails.primaryEmail'},{questionKey:'campaign',target:'sourceCampaign'}]};
 const config={version:1,intervalMinutes:5,pages:[{id:PAGE,name:'QA Page',enabled:true}],forms:[form]};
@@ -58,20 +58,20 @@ test('end-to-end: schedule, process, deduplicate and persist per-form history wi
   assert.equal((await loadHistory([FORM])).length,2);
 });
 
-test('transient 429 retries and fails without moving cursor',async()=>{
+test('Meta 429 activates shared cooldown and fails safely without moving cursor',async()=>{
   memory.reset();requests=[];await saveConfig(config);
   const scheduled=await scheduleForm(form);
   const payload=memory.jobs.get(`mls-${scheduled.runId}-0`);
   errorStatus=429;
-  await assert.rejects(runFormPage(payload,0,3),RetryableLogicFunctionError);
-  assert.ok(await loadSession(scheduled.runId));
-  await runFormPage(payload,3,3);
+  await runFormPage(payload,0,3);
+  assert.ok(await getActiveMetaQuota());
   const state=await loadFormState(FORM);
   assert.equal(state.lastSuccessAt,undefined);
-  assert.ok(state.lastError?.includes('Meta Graph 429'));
+  assert.ok(state.lastError?.includes('Pausado hasta'));
+  assert.equal((await loadSession(scheduled.runId)),null);
   assert.equal((await loadHistory([FORM]))[0].status,'FAILED');
   assert.equal(memory.people.size,0);
-  errorStatus=0;
+  errorStatus=0;memory.reset();
 });
 
 

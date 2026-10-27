@@ -8,6 +8,7 @@ import { getWritablePersonFields } from '../twenty/api.ts';
 import { loadConfig, saveConfig, mergeDiscoveredPages, mergeDiscoveredForms, loadFormState, loadHistory } from './state.ts';
 import { MetaGraphClient, discoverPages, parsePageTokens, resolvePageToken } from '../meta/graph.ts';
 import { scheduleForm } from './runner.ts';
+import { assertMetaQuotaAvailable } from '../meta/rate-limit.ts';
 
 const graph = new MetaGraphClient();
 export async function assertAdmin(): Promise<void> {
@@ -106,11 +107,13 @@ export async function saveWorkspaceConfig(body: unknown): Promise<{ config: Work
   return { config: cfg };
 }
 export async function manualSync(body: unknown) {
+  await assertMetaQuotaAvailable();
   const input = getObject(body);
   const config = await loadConfig();
   const chosen = input.formId === undefined ? undefined : requireMetaId(input.formId);
   const forms = config.forms.filter(f => f.enabled && config.pages.some(p => p.id === f.pageId && p.enabled) && (!chosen || f.id === chosen));
   if (!forms.length) throw new Error('No hay formularios activos seleccionados para sincronizar.');
+  if (!chosen) throw new Error('Selecciona un solo formulario para evitar superar el límite de Meta.');
   const jobs: Array<{ formId: string; queued: boolean; reason?: string; runId?: string }> = [];
   for (const form of forms) jobs.push({ formId: form.id, ...(await scheduleForm(form, { historical: input.historical === true, retryReview: input.retryReview === true })) });
   return { jobs };
