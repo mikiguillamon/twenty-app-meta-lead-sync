@@ -3,6 +3,7 @@ import { MetadataApiClient } from 'twenty-client-sdk/metadata';
 import { RestApiClient } from 'twenty-client-sdk/rest';
 import { useColorScheme } from 'twenty-sdk/front-component';
 import { getUiPalette, type UiPalette } from './ui-theme.ts';
+import { isLanguage, readPreferredLanguage, translate, translateBackendError, writePreferredLanguage, type Language, type TranslationKey, type TranslationParams } from './i18n.ts';
 import type { HistoryEvent, MappingRule, MetaForm, MetaPage, PersonField, WorkspaceConfig } from '../lib/types.ts';
 
 type Screen = 'connections'|'pages'|'forms'|'mapping'|'sync';
@@ -28,9 +29,9 @@ function Button({children,onClick,styles,primary=false,disabled=false}: {childre
 function Subhead({title,description,styles}:{title:string;description?:string;styles:ThemeStyles}) {
   return <div style={{marginBottom:16}}><h3 style={{margin:'0 0 6px',fontSize:18,color:styles.spacing.color}}>{title}</h3>{description && <p style={{...styles.small,margin:0}}>{description}</p>}</div>;
 }
-const summarize = (value: unknown): string => {
+const summarize = (value: unknown, fallback: string): string => {
   const e=value as {message?:string;body?:{message?:string}};
-  return (e?.body?.message || e?.message || 'Error de red desconocido').replace(/EAA\S+/g, '[secreto]').slice(0,240);
+  return (e?.body?.message || e?.message || fallback).replace(/EAA\S+/g, '[secreto]').slice(0,240);
 };
 
 export function AdminPanel({screen}:{screen:Screen}) {
@@ -38,10 +39,20 @@ export function AdminPanel({screen}:{screen:Screen}) {
   const theme = getUiPalette(colorScheme === 'dark' ? 'dark' : 'light');
   const styles = createStyles(theme);
   const {spacing,labelStyle,inputStyle,small,checkStyle} = styles;
+  const [language,setLanguage] = useState<Language>(() => typeof localStorage === 'undefined' ? 'en' : readPreferredLanguage(localStorage));
+  const t = (key: TranslationKey, params?: TranslationParams) => translate(language, key, params);
+  const formatDate = (value:string) => new Date(value).toLocaleString(language === 'es' ? 'es-ES' : 'en-GB');
+  const localizeError = (error: unknown) => translateBackendError(language, summarize(error, t('unknownNetworkError')));
+  const changeLanguage = (next:string) => {
+    if (!isLanguage(next)) return;
+    setLanguage(next);
+    if (typeof localStorage !== 'undefined') writePreferredLanguage(localStorage,next);
+  };
   const [data,setData] = useState<AdminData|null>(null);
   const [config,setConfig] = useState<WorkspaceConfig|null>(null);
   const [busy,setBusy] = useState(false);
   const [status,setStatus] = useState('');
+  const [statusError,setStatusError] = useState(false);
   const [systemToken,setSystemToken] = useState('');
   const [pageTokenJson,setPageTokenJson] = useState('');
   const [mappingFormId,setMappingFormId] = useState<string>('');
@@ -56,16 +67,16 @@ export function AdminPanel({screen}:{screen:Screen}) {
     setMappingFormId(id => result.config.forms.some(f=>f.id===id) ? id : (result.config.forms[0]?.id ?? ''));
     return result;
   },[]);
-  useEffect(() => { void refresh().catch(e => setStatus(`Error de acceso o conexión: ${summarize(e)}`)); },[refresh]);
-  const run = async (work:()=>Promise<unknown>, success='Acción completada.') => {
-    setBusy(true);setStatus('');
-    try { await work(); await refresh(); setStatus(success); }
-    catch(e) { setStatus(`Error: ${summarize(e)}`); }
+  useEffect(() => { void refresh().catch(e => { setStatusError(true); setStatus(t('accessFailure',{reason:localizeError(e)})); }); },[refresh]);
+  const run = async (work:()=>Promise<unknown>, success?:string) => {
+    setBusy(true);setStatus('');setStatusError(false);
+    try { await work(); await refresh(); setStatus(success ?? t('actionComplete')); }
+    catch(e) { setStatusError(true);setStatus(t('errorPrefix',{reason:localizeError(e)})); }
     finally { setBusy(false); }
   };
   const save = () => {
     if (!config) return;
-    void run(async()=> { await api.post('/s/meta-sync/save-config',{config}); }, 'Configuración guardada en este workspace.');
+    void run(async()=> { await api.post('/s/meta-sync/save-config',{config}); }, t('configSaved'));
   };
   const patchPage = (id:string, enabled:boolean) => setConfig(old => old ? {...old,pages:old.pages.map(p=>p.id===id?{...p,enabled}:p),
     forms:old.forms.map(f=>f.pageId===id && !enabled? {...f,enabled:false}:f)}:old);
@@ -76,21 +87,21 @@ export function AdminPanel({screen}:{screen:Screen}) {
     patchForm(form.id,{mappings:rest});
   };
   const validationThenSaveSystem = () => void run(async()=>{
-    if (!systemToken.trim()) throw new Error('Introduce un System User Token');
+    if (!systemToken.trim()) throw new Error(t('systemTokenRequired'));
     await api.post('/s/meta-sync/validate-token',{ mode:'system',token:systemToken.trim() });
     await new MetadataApiClient().mutation({ updateOneApplicationVariable: { __args:{ key:'META_SYSTEM_USER_TOKEN', value: systemToken.trim() } } });
     setSystemToken('');
-  },'System User Token validado y almacenado como secreto del workspace.');
+  },t('systemTokenSaved'));
   const validationThenSavePages = () => void run(async()=>{
     const raw:unknown=JSON.parse(pageTokenJson);
-    if (!raw || Array.isArray(raw) || typeof raw!=='object') throw new Error('Formato esperado: {"PAGE_ID":"PAGE_TOKEN"}');
+    if (!raw || Array.isArray(raw) || typeof raw!=='object') throw new Error(t('tokenJsonShape'));
     for (const [pageId,token] of Object.entries(raw)) await api.post('/s/meta-sync/validate-token',{mode:'page',pageId,token});
     await new MetadataApiClient().mutation({updateOneApplicationVariable:{__args:{key:'META_PAGE_TOKENS_JSON',value:JSON.stringify(raw)}}});
     setPageTokenJson('');
-  },'Page Tokens validados y guardados; el JSON reemplaza al conjunto anterior.');
+  },t('pageTokensSaved'));
   const clearToken = (key: 'META_SYSTEM_USER_TOKEN' | 'META_PAGE_TOKENS_JSON') => void run(async () => {
     await new MetadataApiClient().mutation({ updateOneApplicationVariable: { __args: { key, value: '' } } });
-  }, key === 'META_SYSTEM_USER_TOKEN' ? 'System User Token borrado en este workspace.' : 'Page Tokens borrados en este workspace.');
+  }, key === 'META_SYSTEM_USER_TOKEN' ? t('systemTokenRemoved') : t('pageTokensRemoved'));
   const quotaPause = data?.quota && Date.parse(data.quota.pausedUntil)>Date.now() ? data.quota : null;
   const forms = config?.forms ?? [];
   const pages = config?.pages ?? [];
@@ -103,12 +114,17 @@ export function AdminPanel({screen}:{screen:Screen}) {
 
   return <div style={{maxWidth:940,width:'100%',padding:'8px 12px 24px',boxSizing:'border-box',fontFamily:'inherit',lineHeight:1.5,color:theme.text,colorScheme:theme.colorScheme}}>
     <div style={{display:'flex',alignItems:'baseline',gap:10,flexWrap:'wrap',marginBottom:14}}>
-      <h2 style={{fontSize:22,margin:0,color:theme.text}}>Meta Lead Sync</h2>
+      <h2 style={{fontSize:22,margin:0,color:theme.text}}>{t('appName')}</h2>
+      <label style={{...small,marginLeft:'auto',display:'inline-flex',alignItems:'center',gap:8}}>{t('language')}
+        <select aria-label={t('language')} value={language} onChange={e=>changeLanguage(e.target.value)} style={{...inputStyle,width:'auto',minWidth:112,minHeight:34,padding:'5px 9px'}}>
+          <option value="en">{t('english')}</option><option value="es">{t('spanish')}</option>
+        </select>
+      </label>
 
     </div>
-    {data?.metadataError && <p role="alert" style={{color:theme.errorText}}>No se pudieron cargar todos los campos personalizados: {data.metadataError}</p>}
-    {status && <div role="status" style={{...spacing,background:status.startsWith('Error')?theme.errorSurface:theme.successSurface,color:status.startsWith('Error')?theme.errorText:theme.successText,borderColor:status.startsWith('Error')?theme.errorBorder:theme.successBorder,padding:12}}>{status}</div>}
-    {!config ? <div style={spacing}>Cargando configuración y verificando permisos…</div> : <>
+    {data?.metadataError && <p role="alert" style={{color:theme.errorText}}>{t('metadataError',{reason:translateBackendError(language,data.metadataError)})}</p>}
+    {status && <div role="status" style={{...spacing,background:statusError?theme.errorSurface:theme.successSurface,color:statusError?theme.errorText:theme.successText,borderColor:statusError?theme.errorBorder:theme.successBorder,padding:12}}>{status}</div>}
+    {!config ? <div style={spacing}>{t('loading')}</div> : <>
       {screen==='connections' && <>
         <Subhead styles={styles} title="Conexión con Meta" />
         <section style={spacing}>
