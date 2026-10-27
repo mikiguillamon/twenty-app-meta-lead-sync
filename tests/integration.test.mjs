@@ -40,6 +40,8 @@ test('end-to-end: schedule, process, deduplicate and persist per-form history wi
   assert.equal(memory.people.size,1);
   assert.equal(requests.filter(q=>new URL(q.url).pathname.endsWith('/me/accounts')).length,0,'sync must not list Pages on every batch');
   assert.equal(memory.ledger.size,1);
+  assert.ok(!JSON.stringify([...memory.ledger.values()]).includes('ana@example.com'));
+  assert.ok([...memory.ledger.values()].every(entry => entry.answers === undefined));
   const person=[...memory.people.values()][0];
   assert.deepEqual(person.name,{firstName:'ANA',lastName:'MARIN PEREZ'});
   assert.equal(person.sourceCampaign,'Autumn');
