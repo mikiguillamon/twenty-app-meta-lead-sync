@@ -1,4 +1,6 @@
 import test from 'node:test';
+import { memory } from './fixtures/sdk-stub.mjs';
+import { getActiveMetaQuota, assertMetaQuotaAvailable, MetaQuotaPausedError } from '../src/lib/meta/rate-limit.ts';
 import assert from 'node:assert/strict';
 import { MetaGraphClient, MetaGraphError, parsePageTokens, resolvePageToken, discoverPages } from '../src/lib/meta/graph.ts';
 
@@ -36,11 +38,16 @@ test('fetch leads with fixed date filters and cursor, never follows untrusted ne
   {field:'time_created',operator:'LESS_THAN',value:2000001}]);
  assert.equal(urls[0].pathname,'/v25.0/333333333333/leads');
 });
-test('permanent Meta token error is distinguished from transient rate limit',async()=>{
+test('permanent token error differs from Meta rate limit, which opens shared circuit breaker',async()=>{
+ memory.reset();
  const denied=mockClient(()=>makeResponse({error:{code:190,message:'This method must be called with a Page Access Token'}},400));
  await assert.rejects(denied.leadsPage('333333333333',secret,1,3), e=>e instanceof MetaGraphError && !e.retryable);
  const limited=mockClient(()=>makeResponse({error:{code:4,message:'Rate limit'}},429));
- await assert.rejects(limited.leadsPage('333333333333',secret,1,3), e=>e instanceof MetaGraphError && e.retryable);
+ await assert.rejects(limited.leadsPage('333333333333',secret,1,3), e=>e instanceof MetaGraphError && !e.retryable && e.message.includes('Pausado'));
+ const quota = await getActiveMetaQuota();
+ assert.ok(quota && Date.parse(quota.pausedUntil) > Date.now());
+ await assert.rejects(assertMetaQuotaAvailable(),MetaQuotaPausedError);
+ memory.reset();
 });
 test('credentials are workspace-scoped input and never persisted by the Graph client',async()=>{
  assert.deepEqual(parsePageTokens(`{"22222222222":"${secret}"}`), {'22222222222':secret});
