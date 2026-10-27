@@ -140,8 +140,9 @@ export function AdminPanel({screen}:{screen:Screen}) {
           <Button styles={styles} primary disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/discover-pages',{}),'Páginas actualizadas.')}>Descubrir mis páginas</Button>
           <Button styles={styles} disabled={busy} onClick={save}>Guardar páginas activas</Button>
         </section>
+        {pages.length>0 && <section style={{...spacing,padding:14}}><label style={labelStyle}>Buscar páginas</label><input type="search" style={inputStyle} value={pageSearch} onChange={e=>setPageSearch(e.target.value)} placeholder="Nombre o ID..." /><p style={{...small,margin:'8px 0 0'}}>{visiblePages.length} de {pages.length} páginas · {pages.filter(p=>p.enabled).length} activas</p></section>}
         {pages.length===0?<p>No hay páginas registradas. Descúbrelas usando las credenciales de Conexiones.</p>:
-          pages.map(page=><section key={page.id} style={{...spacing,display:'flex',alignItems:'center',gap:12,justifyContent:'space-between',flexWrap:'wrap'}}>
+          visiblePages.length===0?<p style={small}>No hay páginas que coincidan.</p>:visiblePages.map(page=><section key={page.id} style={{...spacing,display:'flex',alignItems:'center',gap:12,justifyContent:'space-between',flexWrap:'wrap'}}>
             <label style={{display:'flex',alignItems:'center',gap:12}}>
               <input style={checkStyle} type="checkbox" checked={page.enabled} onChange={e=>patchPage(page.id,e.target.checked)} />
               <span><strong>{page.name}</strong><span style={{display:'block',...small}}>Page ID: {page.id}</span></span>
@@ -152,7 +153,8 @@ export function AdminPanel({screen}:{screen:Screen}) {
       {screen==='forms' && <>
         <Subhead styles={styles} title="Formularios de captación" description="Cada formulario se activa por separado. Los formularios de una misma página pueden tener asignaciones diferentes." />
         <Button styles={styles} disabled={busy} primary onClick={save}>Guardar formularios activos</Button>
-        {forms.length===0 ? <p>No hay formularios. Ve a Páginas y pulsa Buscar formularios.</p> : forms.map(form=>
+        {forms.length>0 && <section style={{...spacing,padding:14}}><label style={labelStyle}>Buscar formularios</label><input type="search" style={inputStyle} value={formSearch} onChange={e=>setFormSearch(e.target.value)} placeholder="Nombre, ID o página..." /><p style={{...small,margin:'8px 0 0'}}>{visibleForms.length} de {forms.length} formularios · {forms.filter(f=>f.enabled).length} activos</p></section>}
+        {forms.length===0 ? <p>No hay formularios. Ve a Páginas y pulsa Buscar formularios.</p> : visibleForms.length===0 ? <p style={small}>No hay formularios que coincidan.</p> : visibleForms.map(form=>
           <section key={form.id} style={spacing}>
             <label style={{display:'flex',gap:10,alignItems:'center'}}>
               <input style={checkStyle} type="checkbox" checked={form.enabled} disabled={!pages.some(p=>p.id===form.pageId&&p.enabled)} onChange={e=>patchForm(form.id,{enabled:e.target.checked})} />
