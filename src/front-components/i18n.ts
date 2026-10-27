@@ -3,10 +3,12 @@
  * All new user-facing frontend copy must be added to both dictionaries.
  */
 export type Language = 'en' | 'es';
+export type LanguageMode = Language | 'auto';
 export type TranslationParams = Readonly<Record<string, string | number>>;
 
 export const en = {
   language: 'Language',
+  automaticLanguage: 'Automatic (Twenty)',
   english: 'English',
   spanish: 'Español',
   appName: 'Meta Lead Sync',
@@ -123,6 +125,7 @@ export type TranslationKey = keyof typeof en;
 
 export const es: Record<TranslationKey, string> = {
   language: 'Idioma',
+  automaticLanguage: 'Automático (Twenty)',
   english: 'English',
   spanish: 'Español',
   appName: 'Meta Lead Sync',
@@ -236,20 +239,43 @@ export const es: Record<TranslationKey, string> = {
 };
 
 export const isLanguage = (input: unknown): input is Language => input === 'en' || input === 'es';
+export const isLanguageMode = (input: unknown): input is LanguageMode =>
+  input === 'auto' || isLanguage(input);
+
 export const translate = (lang: Language, key: TranslationKey, params?: TranslationParams): string => {
   const source = lang === 'es' ? es : en;
   const template = source[key] ?? en[key];
   return params ? template.replace(/%\{(\w+)\}/g, (_, variable: string) => String(params[variable] ?? '')) : template;
 };
 
-/** Twenty 2.50 exposes app- and user-scoped localStorage to sandboxed front components. */
-export const LANGUAGE_STORAGE_KEY = 'meta-lead-sync:language';
-export const readPreferredLanguage = (storage: Pick<Storage, 'getItem'>): Language => {
-  try { const stored = storage.getItem(LANGUAGE_STORAGE_KEY); return isLanguage(stored) ? stored : 'en'; }
-  catch { return 'en'; }
+/**
+ * Twenty 2.50 provides the active UI locale via useLocale().
+ * The locale is the viewing member's language in the current workspace,
+ * which may differ between users. Unsupported locales fall back to English.
+ */
+export const languageFromTwentyLocale = (locale: unknown): Language =>
+  typeof locale === 'string' && /^es(?:[-_]|$)/i.test(locale.trim()) ? 'es' : 'en';
+
+export const resolveLanguage = (twentyLocale: unknown, mode: LanguageMode): Language =>
+  mode === 'auto' ? languageFromTwentyLocale(twentyLocale) : mode;
+
+/**
+ * A new key intentionally ignores the 0.2.0-beta.1 manual language choice.
+ * On upgrade EVERY user starts in auto mode and follows Twenty without
+ * needing to clear app storage. Manual overrides remain optional.
+ */
+export const LANGUAGE_MODE_STORAGE_KEY = 'meta-lead-sync:language-mode:v2';
+export const readLanguageMode = (storage: Pick<Storage, 'getItem'>): LanguageMode => {
+  try {
+    const stored = storage.getItem(LANGUAGE_MODE_STORAGE_KEY);
+    return isLanguageMode(stored) ? stored : 'auto';
+  } catch {
+    return 'auto';
+  }
 };
-export const writePreferredLanguage = (storage: Pick<Storage, 'setItem'>, language: Language): void => {
-  try { storage.setItem(LANGUAGE_STORAGE_KEY, language); } catch { /* Storage may be unavailable in some hosts. */ }
+export const writeLanguageMode = (storage: Pick<Storage, 'setItem'>, mode: LanguageMode): void => {
+  try { storage.setItem(LANGUAGE_MODE_STORAGE_KEY, mode); }
+  catch { /* App storage may be unavailable on some hosts. */ }
 };
 
 /** Known backend messages are localized without changing persisted error codes or raw data. */

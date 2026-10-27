@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0-beta.3 — 2026-10-27
+
+- Use Twenty 2.50 `useLocale()` to automatically follow the active workspace UI language (Spanish or English), including live changes.
+- Default to **Automatic (Twenty)** even for users of the prior beta; manual EN/ES overrides remain possible via a new storage key.
+- Unsupported Twenty locales fall back to English; no backend, credentials, or deduplication changes.
+
 ## 0.2.0-beta.2 — 2026-10-27
 
 - Privacy hardening: stop storing Meta lead field_data in the deduplication ledger on new imports or reprocessing. Historical rows are retained pending an explicitly authorized cleanup.

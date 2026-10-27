@@ -14,7 +14,7 @@ The app imports Meta Facebook/Instagram Lead Ads into Twenty People. Every works
 - Scheduled polling (1–60 minutes), manual synchronization and up to 90 days of history.
 - Deduplication by Meta lead ID; safe reconstruction if a linked Person is deleted.
 - Quota-aware backoff, a limited forced test and sanitized audit logs.
-- Light/dark themes and English/Spanish in-app selector. The selected language is stored on that device for the viewing user. Twenty 2.50 settings-tab titles remain static in English.
+- Light/dark themes and English/Spanish in-app selector. The language defaults to the active Twenty UI language and follows changes automatically. English/Spanish overrides can be saved per user/device. Twenty 2.50 settings-tab titles remain static in English.
 
 ## Install from source (self-hosted)
 
@@ -42,7 +42,7 @@ Meta Lead Sync es una aplicación nativa de Twenty para importar clientes potenc
 
 Cada workspace configura sus propias credenciales, páginas, formularios, mapeos y frecuencia. Incorpora deduplicación, histórico de hasta 90 días, protección de cuota y auditoría. **No cambia el webhook de Meta existente.**
 
-**Idioma:** abre los ajustes de Meta Lead Sync y utiliza el selector **Language / Idioma** (English / Español). La preferencia se conserva para ese usuario en ese dispositivo. En Twenty 2.50 los títulos de pestaña del sistema permanecen en inglés.
+**Idioma:** abre los ajustes de Meta Lead Sync y utiliza el selector **Language / Idioma** (English / Español). Por defecto sigue automáticamente el idioma activo de Twenty. Puedes elegir English o Español manualmente y se recuerda por usuario y dispositivo. En Twenty 2.50 los títulos de pestaña del sistema permanecen en inglés.
 
 Instalación: consulta [la guía](docs/INSTALACION.md). Conecta tu propio servidor de Twenty con `remote:add`, publica como app privada con `app:publish --private` e instala en tu workspace.
 

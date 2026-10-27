@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { MetadataApiClient } from 'twenty-client-sdk/metadata';
 import { RestApiClient } from 'twenty-client-sdk/rest';
-import { useColorScheme } from 'twenty-sdk/front-component';
+import { useColorScheme, useLocale } from 'twenty-sdk/front-component';
 import { getUiPalette, type UiPalette } from './ui-theme.ts';
-import { isLanguage, readPreferredLanguage, translate, translateBackendError, writePreferredLanguage, type Language, type TranslationKey, type TranslationParams } from './i18n.ts';
+import { isLanguageMode, readLanguageMode, resolveLanguage, translate, translateBackendError, writeLanguageMode, type LanguageMode, type TranslationKey, type TranslationParams } from './i18n.ts';
 import type { HistoryEvent, MappingRule, MetaForm, MetaPage, PersonField, WorkspaceConfig } from '../lib/types.ts';
 
 type Screen = 'connections'|'pages'|'forms'|'mapping'|'sync';
@@ -36,17 +36,19 @@ const summarize = (value: unknown, fallback: string): string => {
 
 export function AdminPanel({screen}:{screen:Screen}) {
   const colorScheme = useColorScheme();
+  const twentyLocale = useLocale();
   const theme = getUiPalette(colorScheme === 'dark' ? 'dark' : 'light');
   const styles = createStyles(theme);
   const {spacing,labelStyle,inputStyle,small,checkStyle} = styles;
-  const [language,setLanguage] = useState<Language>(() => typeof localStorage === 'undefined' ? 'en' : readPreferredLanguage(localStorage));
+  const [languageMode,setLanguageMode] = useState<LanguageMode>(() => typeof localStorage === 'undefined' ? 'auto' : readLanguageMode(localStorage));
+  const language = resolveLanguage(twentyLocale, languageMode);
   const t = (key: TranslationKey, params?: TranslationParams) => translate(language, key, params);
   const formatDate = (value:string) => new Date(value).toLocaleString(language === 'es' ? 'es-ES' : 'en-GB');
   const localizeError = (error: unknown) => translateBackendError(language, summarize(error, t('unknownNetworkError')));
   const changeLanguage = (next:string) => {
-    if (!isLanguage(next)) return;
-    setLanguage(next);
-    if (typeof localStorage !== 'undefined') writePreferredLanguage(localStorage,next);
+    if (!isLanguageMode(next)) return;
+    setLanguageMode(next);
+    if (typeof localStorage !== 'undefined') writeLanguageMode(localStorage,next);
   };
   const [data,setData] = useState<AdminData|null>(null);
   const [config,setConfig] = useState<WorkspaceConfig|null>(null);
@@ -116,7 +118,8 @@ export function AdminPanel({screen}:{screen:Screen}) {
     <div style={{display:'flex',alignItems:'baseline',gap:10,flexWrap:'wrap',marginBottom:14}}>
       <h2 style={{fontSize:22,margin:0,color:theme.text}}>{t('appName')}</h2>
       <label style={{...small,marginLeft:'auto',display:'inline-flex',alignItems:'center',gap:8}}>{t('language')}
-        <select aria-label={t('language')} value={language} onChange={e=>changeLanguage(e.target.value)} style={{...inputStyle,width:'auto',minWidth:112,minHeight:34,padding:'5px 9px'}}>
+        <select aria-label={t('language')} value={languageMode} onChange={e=>changeLanguage(e.target.value)} style={{...inputStyle,width:'auto',minWidth:112,minHeight:34,padding:'5px 9px'}}>
+          <option value="auto">{t("automaticLanguage")}</option>
           <option value="en">{t('english')}</option><option value="es">{t('spanish')}</option>
         </select>
       </label>
