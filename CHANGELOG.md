@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4 — 2026-10-27
+
+- Evita consultar /me/accounts por cada lote de 25 leads al usar System User Token; fallback de Page Token solo ante errores concretos de permisos.
+- Muestra cooldown activo en hora local y desactiva botones de importación durante la pausa.
+- Test de integración verifica que la sincronización directa no enumera las páginas.
+
 ## 0.1.3 — 2026-10-27
 
 - Protección de cuota de Meta: pausa global por workspace ante error 4/613/429, respetando `Retry-After` y señales `X-App-Usage` / `X-Business-Use-Case-Usage`.
