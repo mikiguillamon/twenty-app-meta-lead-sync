@@ -1,7 +1,7 @@
 import type { MetaForm, MetaLead, PersonField } from '../types.ts';
 import { safeError, requireMetaId } from '../validation.ts';
 import { mapLeadToPerson } from '../mapping/person.ts';
-import { findLedger, claimLedger, patchLedger, findMatchingPerson, createPerson, PersonCreationUncertainError, updatePerson } from '../twenty/api.ts';
+import { findLedger, claimLedger, patchLedger, findMatchingPerson, personRecordExists, createPerson, PersonCreationUncertainError, updatePerson } from '../twenty/api.ts';
 
 export type LeadOutcome = 'imported' | 'linked' | 'duplicate' | 'review';
 
@@ -9,7 +9,14 @@ export type LeadOutcome = 'imported' | 'linked' | 'duplicate' | 'review';
 export async function processLead(lead: MetaLead, form: MetaForm, fields: PersonField[], retryReview: boolean): Promise<LeadOutcome> {
   requireMetaId(lead.id);
   let ledger = await findLedger(lead.id);
-  if (ledger?.status === 'PROCESSED' || (ledger?.status === 'NEEDS_REVIEW' && !retryReview)) return 'duplicate';
+  // Only a linked, confirmed-absent Person can be recovered. Never reset deduplication
+  // for a legacy PROCESSED entry that has no Person ID.
+  let linkedPersonWasDeleted = false;
+  if (ledger?.status === 'PROCESSED') {
+    if (!ledger.personRecordId || await personRecordExists(ledger.personRecordId)) return 'duplicate';
+    linkedPersonWasDeleted = true;
+  }
+  if (ledger?.status === 'NEEDS_REVIEW' && !retryReview) return 'duplicate';
   if (ledger?.status === 'CLAIMED' && Date.now() - Date.parse(ledger.updatedAt ?? '') < 5 * 60_000) {
     throw new Error('Otro trabajo está importando este lead; se reintentará.');
   }
@@ -24,7 +31,9 @@ export async function processLead(lead: MetaLead, form: MetaForm, fields: Person
     ledger = await findLedger(lead.id);
     if (!ledger) throw new Error('No se puede recuperar el nuevo ledger.');
   } else {
-    await patchLedger(ledger.id, { status: 'CLAIMED', failureReason: '', answers });
+    await patchLedger(ledger.id, { status: 'CLAIMED', failureReason: '', answers,
+      ...(linkedPersonWasDeleted ? { personRecordId: '' } : {}) });
+    if (linkedPersonWasDeleted) ledger = { ...ledger, personRecordId: undefined };
   }
   try {
     const result = mapLeadToPerson(lead, form.mappings, fields);

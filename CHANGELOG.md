@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.7 — 2026-10-27
+
+- La sincronización comprueba si la Persona vinculada a un ledger PROCESSED sigue existiendo (GET /rest/people/:id).
+- Si Twenty confirma su ausencia (404/410), reutiliza el ledger original y vuelve a importar el lead, sin borrar el índice de deduplicación.
+- Las Personas existentes siguen deduplicadas; errores de permisos o red no se confunden con registros borrados.
+- Si el ledger histórico no contiene un ID de Persona, se mantiene protegido para evitar creaciones ambiguas.
+- Resincronizar histórico requiere seleccionar la importación histórica de 90 días; el reset de Personas no modifica el cursor.
+- Pruebas de reconstrucción tras eliminación, deduplicación posterior y protección de ledger sin ID.
+
 ## 0.1.6 — 2026-10-27
 
 - Recuperar el identificador de Persona creada aunque Twenty devuelva un envelope REST diferente o una respuesta sin ID; búsqueda posterior por email/teléfono.

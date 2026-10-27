@@ -46,6 +46,30 @@ async function findOneBy(field: 'emails.primaryEmail'|'phones.primaryPhoneNumber
   const response = await newClient().get('/rest/people', { query: { filter: filterEq(field, value), limit: '1', fields: 'id' } });
   return personId(firstRecord(response, 'people'));
 }
+/** Confirm the Person linked to a processed Meta lead remains accessible in Twenty. */
+export async function personRecordExists(id: string): Promise<boolean> {
+  if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(id)) {
+    throw new Error('ID de Persona del registro de sincronización inválido');
+  }
+  let response: unknown;
+  try {
+    response = await newClient().get(`/rest/people/${encodeURIComponent(id)}`, {
+      query: { fields: 'id' },
+    });
+  } catch (error) {
+    const status = getObject(error).status;
+    if (status === 404 || status === 410) return false;
+    throw error;
+  }
+  const root = getObject(response);
+  const data = getObject(root.data);
+  // Twenty 2.50 GET /rest/people/:id returns { data: { person: {...} } }.
+  const candidates = [data.person, root.person, data, root].map(getObject);
+  const record = candidates.find(row => personId(row) === id);
+  if (!record) throw new Error('No se pudo verificar si la Persona vinculada existe en Twenty');
+  return !record.deletedAt;
+}
+
 export async function findMatchingPerson(email?: string, phone?: string): Promise<string | undefined> {
   if (email) { const existing = await findOneBy('emails.primaryEmail', email); if (existing) return existing; }
   if (phone) { const existing = await findOneBy('phones.primaryPhoneNumber', phone); if (existing) return existing; }
