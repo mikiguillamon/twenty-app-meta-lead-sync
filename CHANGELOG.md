@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.5 — 2026-10-27
+
+- Auditoría técnica por ejecución (runId/formId, estado, páginas, contadores, códigos HTTP/Meta), sin credenciales ni payloads.
+- Vista y JSON seleccionable para investigar errores. Máximo 60 eventos por ejecución y 200 eventos por consulta; solo eventos de los últimos 14 días.
+- Opción manual con confirmación que omite una sola vez la pausa local, limitada a una página de 25 leads y sin importar histórico; no evita los límites de Meta ni fuerza reintentos.
+- No altera webhooks, acceso a tokens ni identidades del ledger.
+
 ## 0.1.4 — 2026-10-27
 
 - Evita consultar /me/accounts por cada lote de 25 leads al usar System User Token; fallback de Page Token solo ante errores concretos de permisos.
