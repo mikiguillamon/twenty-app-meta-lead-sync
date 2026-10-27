@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.0-beta.1 — 2026-10-27
+
+- Interfaz de configuración en inglés/español con selector por usuario y persistencia local aislada.
+- Catálogo tipado de traducciones y cobertura de errores conocidos, fechas y estados.
+- Títulos de menú estáticos en inglés: limitación de Twenty 2.50.
+- No altera identificadores internos, tokens, configuración por workspace ni lógica de sincronización.
+- Preparación de distribución pública sin publicar todavía en npm ni cambiar la identidad del paquete privado.
+
 ## 0.1.9 — 2026-10-27
 
 - «Buscar formularios» pasa a «Actualizar formularios» para distinguir el descubrimiento en Meta de la búsqueda local.
