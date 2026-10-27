@@ -120,6 +120,10 @@ export async function runFormPage(job: FormJob, retryCount: number, maxRetries: 
     session.pageCheckpoint = undefined;
     await saveSession(session);
     await appendAudit({runId:session.runId,formId:session.formId,kind:'PAGE',level:'INFO',page:job.page,imported:pageStats.imported,linked:pageStats.linked,duplicate:pageStats.duplicate,review:pageStats.review});
+    if (session.forceOnce && result.after) {
+      await finalize(session, 'Prueba forzada limitada a una página; cursor sin avanzar.');
+      return { done: true, stats: session.stats };
+    }
     await continueAfterPage(session, job, result.after);
     return { done: !result.after, stats: session.stats };
   } catch (e) {
