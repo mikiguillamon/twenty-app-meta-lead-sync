@@ -112,3 +112,20 @@ test('ledger creation with successful minimal Twenty response imports instead of
   assert.equal((await loadFormState(FORM)).lastResult.duplicate,1);
   memory.ledgerMinimalResponse=false;
 });
+
+test('confirmed force-once bypasses local pause for one page without moving cursor on a paginated result',async()=>{
+  memory.reset();requests=[];errorStatus=429;usePagination=false;await saveConfig(config);
+  const initial=await scheduleForm(form);
+  await runFormPage(memory.jobs.get(`mls-${initial.runId}-0`),0,3);
+  assert.ok(await getActiveMetaQuota());
+  errorStatus=0;usePagination=true;
+  const forced=await scheduleForm(form,{forceOnce:true});
+  assert.equal(forced.queued,true);
+  await runFormPage(memory.jobs.get(`mls-${forced.runId}-0`),0,3);
+  assert.equal(memory.people.size,1);
+  const state=await loadFormState(FORM);
+  assert.equal(state.lastSuccessAt,undefined);
+  assert.match(state.lastError,/una página/);
+  assert.equal(memory.jobs.has(`mls-${forced.runId}-1`),false);
+  usePagination=false;memory.reset();
+});

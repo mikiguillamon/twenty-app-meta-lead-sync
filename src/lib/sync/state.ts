@@ -1,4 +1,5 @@
 import { kv } from 'twenty-sdk/logic-function';
+import { deleteAudit } from './audit.ts';
 import type { HistoryEvent, MetaForm, MetaPage, SyncState, WorkspaceConfig, SyncCounters } from '../types.ts';
 import { DEFAULT_CONFIG } from '../types.ts';
 
@@ -9,7 +10,7 @@ const sessionKey = (runId: string) => `meta-lead-sync:run:${runId}`;
 
 export type SyncSession = {
   runId: string; formId: string; formName: string; sinceSec: number; untilSec: number;
-  startedAt: string; stats: SyncCounters; historical: boolean; retryReview: boolean;
+  startedAt: string; stats: SyncCounters; historical: boolean; retryReview: boolean; forceOnce?: boolean;
   pageCheckpoint?: { page: number; outcomes: Record<string, 'imported'|'linked'|'duplicate'|'review'> };
   lastCommittedPage?: { page: number; after?: string };
 };
@@ -26,7 +27,12 @@ export async function addHistory(event: HistoryEvent): Promise<void> {
   // Different forms use different KV keys: their jobs cannot clobber each other's history.
   const key = historyKey(event.formId);
   const old = (await kv.get<HistoryEvent[]>(key)) ?? [];
-  await kv.set(key, [event, ...old.filter(e => e.runId !== event.runId)].slice(0, 50));
+  const recent = [event, ...old.filter(e => e.runId !== event.runId)].filter(e => Date.parse(e.finishedAt) > Date.now()-14*86400000);
+  const retained = recent.slice(0,50);
+  await kv.set(key, retained);
+  const kept = new Set(retained.map(e=>e.runId));
+  await Promise.all(old.filter(e=>!kept.has(e.runId)).map(e=>deleteAudit(e.runId)));
+
 }
 export const saveSession = async (session: SyncSession): Promise<void> => { await kv.set(sessionKey(session.runId), session); };
 export const loadSession = async (runId: string): Promise<SyncSession | null> => kv.get<SyncSession>(sessionKey(runId));
