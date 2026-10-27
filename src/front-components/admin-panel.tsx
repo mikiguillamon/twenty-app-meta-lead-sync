@@ -7,7 +7,7 @@ import type { HistoryEvent, MappingRule, MetaForm, MetaPage, PersonField, Worksp
 
 type Screen = 'connections'|'pages'|'forms'|'mapping'|'sync';
 type FormState = { formId: string; activeRunId?: string; lastSuccessAt?: string; lastAttemptAt?: string; lastError?: string; lastResult?: Record<string, number> };
-type AdminData = { config: WorkspaceConfig; states: FormState[]; history: HistoryEvent[]; fields: PersonField[];
+type AdminData = { quota?: {pausedUntil:string;reason:string;usagePercent?:number}|null; config: WorkspaceConfig; states: FormState[]; history: HistoryEvent[]; fields: PersonField[];
   metadataError?: string; credentials: { systemConfigured: boolean; pageTokensConfigured: boolean } };
 const api = new RestApiClient();
 type ThemeStyles = ReturnType<typeof createStyles>;
@@ -87,6 +87,7 @@ export function AdminPanel({screen}:{screen:Screen}) {
   const clearToken = (key: 'META_SYSTEM_USER_TOKEN' | 'META_PAGE_TOKENS_JSON') => void run(async () => {
     await new MetadataApiClient().mutation({ updateOneApplicationVariable: { __args: { key, value: '' } } });
   }, key === 'META_SYSTEM_USER_TOKEN' ? 'System User Token borrado en este workspace.' : 'Page Tokens borrados en este workspace.');
+  const quotaPause = data?.quota && Date.parse(data.quota.pausedUntil)>Date.now() ? data.quota : null;
   const forms = config?.forms ?? [];
   const pages = config?.pages ?? [];
   const selectedForm = forms.find(f=>f.id===mappingFormId);
@@ -189,6 +190,10 @@ export function AdminPanel({screen}:{screen:Screen}) {
           </select>
           <div><Button styles={styles} onClick={save} disabled={busy}>Guardar frecuencia</Button></div>
         </section>
+        {quotaPause && <section role="alert" style={{...spacing,background:theme.errorSurface,color:theme.errorText,borderColor:theme.errorBorder}}>
+          Meta ha limitado temporalmente las solicitudes. Pausa hasta {new Date(quotaPause.pausedUntil).toLocaleString()} (hora local).
+          No se realizarán peticiones antes de esa hora. Actualiza el estado después.
+        </section>}
         <section style={spacing}>
           <label style={{display:'block',...labelStyle}}>Formulario para sincronizar</label>
           <select style={inputStyle} value={syncFormId} onChange={e=>setSyncFormId(e.target.value)}>
@@ -196,8 +201,8 @@ export function AdminPanel({screen}:{screen:Screen}) {
             {forms.filter(f=>f.enabled).map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
           <label style={{display:'flex',gap:8,marginTop:9,fontSize:13}}><input style={checkStyle} type="checkbox" checked={retryReview} onChange={e=>setRetryReview(e.target.checked)}/>Reprocesar también entradas NEEDS_REVIEW (tras corregir el mapeo)</label>
-          <Button styles={styles} primary disabled={busy||!syncFormId} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),retryReview}),'Trabajo de sincronización encolado. Consulta el historial después de actualizar.')}>Sincronizar ahora</Button>
-          <Button styles={styles} disabled={busy||!syncFormId} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),historical:true,retryReview}),'Importación histórica encolada (hasta 90 días).')}>Importar histórico (90 días)</Button>
+          <Button styles={styles} primary disabled={busy||!syncFormId||!!quotaPause} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),retryReview}),'Trabajo de sincronización encolado. Consulta el historial después de actualizar.')}>Sincronizar ahora</Button>
+          <Button styles={styles} disabled={busy||!syncFormId||!!quotaPause} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),historical:true,retryReview}),'Importación histórica encolada (hasta 90 días).')}>Importar histórico (90 días)</Button>
           <Button styles={styles} disabled={busy} onClick={()=>void run(async()=>{},'Estado e historial actualizados.')}>Actualizar estado</Button>
         </section>
         <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Estado por formulario</h4>
