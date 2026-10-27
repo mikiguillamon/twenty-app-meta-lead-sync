@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0-beta.2 — 2026-10-27
+
+- Privacy hardening: stop storing Meta lead field_data in the deduplication ledger on new imports or reprocessing. Historical rows are retained pending an explicitly authorized cleanup.
+- Add regression coverage ensuring no Meta answers are copied to the ledger.
+- Public release preparation only; no npm publish or production configuration changes.
+
 ## 0.2.0-beta.1 — 2026-10-27
 
 - Interfaz de configuración en inglés/español con selector por usuario y persistencia local aislada.
