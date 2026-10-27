@@ -220,27 +220,26 @@ export function AdminPanel({screen}:{screen:Screen}) {
           <Button styles={styles} disabled={busy} onClick={()=>void run(async()=>{},'Estado e historial actualizados.')}>Actualizar estado</Button>
           {quotaPause && <div style={{marginTop:12}}><Button styles={styles} disabled={busy||!syncFormId} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{formId:syncFormId,forceOnce:true,retryReview}),'Prueba forzada encolada (hasta 25 leads).')}>Forzar prueba (máx. 25 leads)</Button></div>}
         </section>
-        <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Estado por formulario</h4>
+        <section style={{...spacing,padding:16}}><button type="button" aria-expanded={!!expanded.states} onClick={()=>toggle('states')} style={{...styles.buttonStyle,margin:0,width:'100%',textAlign:'left'}}>{expanded.states?'▾':'▸'} Estado por formulario · {data?.states.length??0}</button>{expanded.states && <div style={{maxHeight:350,overflowY:'auto',marginTop:12}}>
           {data?.states.length?data.states.map(st=><div key={st.formId} style={{borderBottom:'1px solid '+theme.divider,padding:'10px 0'}}>
             <strong>{forms.find(f=>f.id===st.formId)?.name??st.formId}</strong> · {st.activeRunId?'En curso':'Sin trabajo activo'}
             <div style={small}>Último éxito: {st.lastSuccessAt?new Date(st.lastSuccessAt).toLocaleString():'Nunca'} · Último intento: {st.lastAttemptAt?new Date(st.lastAttemptAt).toLocaleString():'Nunca'}</div>
             {st.lastError && <div style={{color:theme.errorText,fontSize:13}}>Error: {st.lastError}</div>}
-          </div>):<p style={small}>No hay formularios configurados.</p>}
+          </div>):<p style={small}>No hay formularios configurados.</p>}</div>}
         </section>
-        <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Auditoría técnica (sin datos personales)</h4>
-          <p style={small}>Eventos de los últimos 14 días asociados al historial disponible. Selecciona el JSON y cópialo para compartir incidencias.</p>
+        <section style={{...spacing,padding:16}}><button type="button" aria-expanded={!!expanded.audit} onClick={()=>toggle('audit')} style={{...styles.buttonStyle,margin:0,width:'100%',textAlign:'left'}}>{expanded.audit?'▾':'▸'} Auditoría técnica · {data?.audit?.length??0}</button>{expanded.audit && <div style={{maxHeight:360,overflowY:'auto',marginTop:12}}><p style={small}>Eventos de los últimos 14 días</p>
           <textarea readOnly value={JSON.stringify(data?.audit??[],null,2)} style={{...inputStyle,minHeight:110,maxHeight:240,fontFamily:'monospace',fontSize:11}} />
           {(data?.audit??[]).slice(0,60).map((e,i)=><div key={e.runId+'-'+i} style={{borderBottom:'1px solid '+theme.divider,padding:'7px 0',fontSize:12}}>
             <strong>{new Date(e.at).toLocaleString()}</strong> · {e.level} · {e.kind} · {forms.find(f=>f.id===e.formId)?.name??e.formId} · Run {e.runId.slice(0,8)}
             {e.httpStatus!==undefined?' · HTTP '+e.httpStatus:''}{e.metaCode!==undefined?' · Meta '+e.metaCode:''}{e.page!==undefined?' · Lote '+e.page:''}
           </div>)}
-          {!data?.audit?.length&&<p style={small}>Sin eventos de auditoría todavía.</p>}
+          {!data?.audit?.length&&<p style={small}>Sin eventos de auditoría todavía.</p>}</div>}
         </section>
-        <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Últimas ejecuciones</h4>
+        <section style={{...spacing,padding:16}}><button type="button" aria-expanded={!!expanded.history} onClick={()=>toggle('history')} style={{...styles.buttonStyle,margin:0,width:'100%',textAlign:'left'}}>{expanded.history?'▾':'▸'} Últimas ejecuciones · {data?.history?.length??0}</button>{expanded.history && <div style={{maxHeight:360,overflow:'auto',marginTop:12}}>
           <div style={{overflowX:'auto'}}><table style={{borderCollapse:'collapse',width:'100%',fontSize:13}}><thead><tr>{['Finalizado','Formulario','Estado','Nuevos','Vinculados','Duplicados','Revisión','Fallidos'].map(x=><th key={x} style={{textAlign:'left',padding:7,borderBottom:'1px solid '+theme.border,color:theme.textMuted}}>{x}</th>)}</tr></thead>
           <tbody>{(data?.history??[]).map(evt=><tr key={evt.runId}>{[new Date(evt.finishedAt).toLocaleString(),evt.formName,evt.status,evt.stats.imported,evt.stats.linked,evt.stats.duplicate,evt.stats.review,evt.stats.failed].map((x,i)=><td key={i} style={{padding:7,borderBottom:'1px solid '+theme.divider,color:theme.text}}>{x}</td>)}</tr>)}</tbody></table></div>
           {!data?.history.length&&<p style={small}>Todavía no se ha completado ninguna sincronización.</p>}
-          {data?.history.filter(e=>e.reason).slice(0,5).map(e=><p key={e.runId} style={{fontSize:12,color:theme.errorText}}>{e.formName}: {e.reason}</p>)}
+          {data?.history.filter(e=>e.reason).slice(0,5).map(e=><p key={e.runId} style={{fontSize:12,color:theme.errorText}}>{e.formName}: {e.reason}</p>)}</div>}
         </section>
       </>}
 
