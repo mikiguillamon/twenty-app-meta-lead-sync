@@ -1,4 +1,5 @@
 import type { MetaLead, MetaPage, MetaQuestion } from '../types.ts';
+import { assertMetaQuotaAvailable, isMetaRateLimit, registerMetaRateLimit, observeMetaUsage } from './rate-limit.ts';
 import { getObject, getString, requireMetaId, safeError } from '../validation.ts';
 
 export type GraphFetch = typeof fetch;
@@ -24,6 +25,7 @@ export class MetaGraphClient {
     if (!/^\/(me\/accounts|[0-9]+(?:\/leadgen_forms|\/leads)?)$/.test(path)) throw new Error('Ruta Graph API prohibida');
     const url = new URL(`https://graph.facebook.com/${this.apiVersion}${path}`);
     for (const [key, value] of Object.entries(query)) url.searchParams.set(key, value);
+    await assertMetaQuotaAvailable();
     let response: Response;
     try {
       response = await this.request(url.toString(), {
@@ -35,10 +37,16 @@ export class MetaGraphClient {
     if (!response.ok) {
       const err = getObject(getObject(json).error);
       const code = Number(err.code || 0);
-      const retryable = response.status === 429 || response.status >= 500 || [1, 2, 4, 17, 32, 341, 613].includes(code) || err.is_transient === true;
+      const limited = isMetaRateLimit(response.status, code);
+      if (limited) {
+        const until = await registerMetaRateLimit(response, code);
+        throw new MetaGraphError(`Límite de Meta alcanzado. Pausado hasta ${until}`, false, response.status);
+      }
+      const retryable = response.status >= 500 || [1, 2, 341].includes(code) || err.is_transient === true;
       const reason = getString(err.message, 160) || `HTTP ${response.status}`;
       throw new MetaGraphError(`Meta Graph ${response.status} (${code || 'HTTP'}): ${safeError(new Error(reason))}`, retryable, response.status);
     }
+    await observeMetaUsage(response);
     return json as T;
   }
   private async allPages<T>(path: string, token: string, fields: string, transform: (x: unknown) => T): Promise<T[]> {
