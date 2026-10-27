@@ -54,7 +54,7 @@ export async function personRecordExists(id: string): Promise<boolean> {
   let response: unknown;
   try {
     response = await newClient().get(`/rest/people/${encodeURIComponent(id)}`, {
-      query: { fields: 'id,deletedAt' },
+      query: { fields: 'id' },
     });
   } catch (error) {
     const status = getObject(error).status;
