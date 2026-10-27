@@ -14,6 +14,8 @@ test('full historical imports max 90 days, cursor overlap 300 seconds, regular c
  const now=Date.UTC(2026,9,26,20,0,0);
  const hist=secondsForSync(undefined,now,true);
  assert.equal(hist.untilSec-hist.sinceSec,90*86400);
+ const initial=secondsForSync(undefined,now,false);
+ assert.equal(initial.untilSec-initial.sinceSec,86400);
  const regular=secondsForSync(new Date(now-900000).toISOString(),now,false);
  assert.equal(regular.sinceSec,Math.floor((now-900000)/1000)-300);
  assert.equal(shouldSchedule(5,new Date(now-240000).toISOString(),now),false);
