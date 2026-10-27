@@ -2,6 +2,7 @@ import { enqueueJobs, RetryableLogicFunctionError } from 'twenty-sdk/logic-funct
 import { IDS } from '../../constants/ids.ts';
 import { MetaGraphClient, MetaGraphError, parsePageTokens, resolvePageToken } from '../meta/graph.ts';
 import { processLead } from './process-lead.ts';
+import { appendAudit } from './audit.ts';
 import { assertMetaQuotaAvailable, getActiveMetaQuota, MetaQuotaPausedError } from '../meta/rate-limit.ts';
 import { getWritablePersonFields } from '../twenty/api.ts';
 import { blankCounters } from '../types.ts';
@@ -14,15 +15,15 @@ export type FormJob = { runId: string; formId: string; page: number; after?: str
 const graph = new MetaGraphClient();
 const maxPages = 400; // 25 leads per page; exceeds normal run sizes -> explicit failure instead of silent truncation.
 
-export async function scheduleForm(form: MetaForm, options: { historical?: boolean; retryReview?: boolean } = {}): Promise<{ queued: boolean; reason?: string; runId?: string }> {
-  await assertMetaQuotaAvailable();
+export async function scheduleForm(form: MetaForm, options: { historical?: boolean; retryReview?: boolean; forceOnce?: boolean } = {}): Promise<{ queued: boolean; reason?: string; runId?: string }> {
+  if (!options.forceOnce) await assertMetaQuotaAvailable();
   const st = await loadFormState(form.id);
   if (isRunActive(st, Date.now())) return { queued: false, reason: 'El formulario ya tiene una importación en curso.' };
   const runId = crypto.randomUUID();
   const startedAt = new Date().toISOString();
   const range = secondsForSync(st.lastSuccessAt, Date.now(), !!options.historical);
   const session: SyncSession = { runId, formId: form.id, formName: form.name, ...range,
-    startedAt, stats: blankCounters(), historical: !!options.historical, retryReview: !!options.retryReview };
+    startedAt, stats: blankCounters(), historical: !!options.historical, retryReview: !!options.retryReview, forceOnce: !!options.forceOnce };
   await saveSession(session);
   await saveFormState(form.id, { ...st, lastAttemptAt: startedAt, activeRunId: runId, activeStartedAt: startedAt, lastError: undefined });
   try {
@@ -33,6 +34,7 @@ export async function scheduleForm(form: MetaForm, options: { historical?: boole
     await deleteSession(runId);
     throw e;
   }
+  await appendAudit({runId,formId:form.id,kind:options.forceOnce?'FORCED':'QUEUED',level:options.forceOnce?'WARN':'INFO'});
   return { queued: true, runId };
 }
 
@@ -47,6 +49,7 @@ async function finalize(session: SyncSession, failedReason?: string): Promise<vo
     lastError: failedReason, lastResult: session.stats,
     ...(!failedReason ? { lastSuccessAt: new Date(session.untilSec * 1000).toISOString(), completedRunId: session.runId } : {}),
   });
+  await appendAudit({runId:session.runId,formId:session.formId,kind:failedReason?'FAILED':'COMPLETED',level:failedReason?'ERROR':'INFO',imported:session.stats.imported,linked:session.stats.linked,duplicate:session.stats.duplicate,review:session.stats.review});
   await deleteSession(session.runId);
 }
 
@@ -71,7 +74,7 @@ export async function runFormPage(job: FormJob, retryCount: number, maxRetries: 
   const state = await loadFormState(job.formId);
   if (!session || !form || state.activeRunId !== job.runId) return { done: true };
   try {
-    await assertMetaQuotaAvailable();
+    if (!session.forceOnce) await assertMetaQuotaAvailable();
     // A previous attempt may have already committed this page before the next enqueue failed.
     if (session.lastCommittedPage?.page === job.page) {
       await continueAfterPage(session, job, session.lastCommittedPage.after);
@@ -90,14 +93,14 @@ export async function runFormPage(job: FormJob, retryCount: number, maxRetries: 
     if (!token) throw new Error('Falta un token de Meta para esta página.');
     let result;
     try {
-      result = await graph.leadsPage(form.id, token, session.sinceSec, session.untilSec, job.after);
+      result = await graph.leadsPage(form.id, token, session.sinceSec, session.untilSec, job.after, !!session.forceOnce);
     } catch (e) {
       // Only an explicit access-token/permission error justifies resolving a Page token.
       // Never add more requests on throttling, network failures or Graph errors 4/613.
       if (directPageToken || !systemToken || !(e instanceof MetaGraphError) ||
           ![10, 190, 200].includes(e.code)) throw e;
       const pageToken = await resolvePageToken(form.pageId, { systemToken }, graph);
-      result = await graph.leadsPage(form.id, pageToken, session.sinceSec, session.untilSec, job.after);
+      result = await graph.leadsPage(form.id, pageToken, session.sinceSec, session.untilSec, job.after, !!session.forceOnce);
     }
     const checkpoint = session.pageCheckpoint?.page === job.page
       ? session.pageCheckpoint : { page: job.page, outcomes: {} as Record<string, 'imported'|'linked'|'duplicate'|'review'> };
@@ -116,10 +119,12 @@ export async function runFormPage(job: FormJob, retryCount: number, maxRetries: 
     session.lastCommittedPage = { page: job.page, ...(result.after ? { after: result.after } : {}) };
     session.pageCheckpoint = undefined;
     await saveSession(session);
+    await appendAudit({runId:session.runId,formId:session.formId,kind:'PAGE',level:'INFO',page:job.page,imported:pageStats.imported,linked:pageStats.linked,duplicate:pageStats.duplicate,review:pageStats.review});
     await continueAfterPage(session, job, result.after);
     return { done: !result.after, stats: session.stats };
   } catch (e) {
     const reason = safeError(e);
+    if (e instanceof MetaGraphError) await appendAudit({runId:session.runId,formId:session.formId,kind:await getActiveMetaQuota()?'RATE_LIMIT':'FAILED',level:'ERROR',page:job.page,httpStatus:e.status,metaCode:e.code});
     if (e instanceof MetaQuotaPausedError || await getActiveMetaQuota()) {
       // Abort current run without marking the cursor as successful. Cron resumes after the pause.
       await finalize(session, reason);
