@@ -9,7 +9,7 @@ const sessionKey = (runId: string) => `meta-lead-sync:run:${runId}`;
 
 export type SyncSession = {
   runId: string; formId: string; formName: string; sinceSec: number; untilSec: number;
-  startedAt: string; stats: SyncCounters; historical: boolean; retryReview: boolean;
+  startedAt: string; stats: SyncCounters; historical: boolean; retryReview: boolean; forceOnce?: boolean;
   pageCheckpoint?: { page: number; outcomes: Record<string, 'imported'|'linked'|'duplicate'|'review'> };
   lastCommittedPage?: { page: number; after?: string };
 };
