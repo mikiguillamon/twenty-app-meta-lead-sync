@@ -8,6 +8,7 @@ import { getWritablePersonFields } from '../twenty/api.ts';
 import { loadConfig, saveConfig, mergeDiscoveredPages, mergeDiscoveredForms, loadFormState, loadHistory } from './state.ts';
 import { MetaGraphClient, discoverPages, parsePageTokens, resolvePageToken } from '../meta/graph.ts';
 import { scheduleForm } from './runner.ts';
+import { readAudit } from './audit.ts';
 import { assertMetaQuotaAvailable, getActiveMetaQuota } from '../meta/rate-limit.ts';
 
 const graph = new MetaGraphClient();
@@ -35,7 +36,9 @@ export async function dashboard() {
   let fields: PersonField[] = [];
   let metadataError: string | undefined;
   try { fields = await getWritablePersonFields(); } catch (e) { metadataError = e instanceof Error ? e.message.slice(0,180) : 'Metadata no disponible'; }
-  return { config, states, quota: await getActiveMetaQuota(), history: await loadHistory(config.forms.map(f => f.id)), fields, metadataError, credentials: {
+  const history = await loadHistory(config.forms.map(f => f.id));
+  const audit = await readAudit(history.map(e=>e.runId).concat(states.map(s=>s.activeRunId??'').filter(Boolean)));
+  return { config, states, audit, quota: await getActiveMetaQuota(), history, fields, metadataError, credentials: {
     systemConfigured: !!process.env.META_SYSTEM_USER_TOKEN,
     pageTokensConfigured: !!process.env.META_PAGE_TOKENS_JSON,
   }};
@@ -107,14 +110,16 @@ export async function saveWorkspaceConfig(body: unknown): Promise<{ config: Work
   return { config: cfg };
 }
 export async function manualSync(body: unknown) {
-  await assertMetaQuotaAvailable();
   const input = getObject(body);
+  const forceOnce = input.forceOnce === true && input.confirmForce === true && input.historical !== true;
+  if (input.forceOnce === true && !forceOnce) throw new Error('La sincronización forzada exige confirmación y no permite histórico.');
+  if (!forceOnce) await assertMetaQuotaAvailable();
   const config = await loadConfig();
   const chosen = input.formId === undefined ? undefined : requireMetaId(input.formId);
   const forms = config.forms.filter(f => f.enabled && config.pages.some(p => p.id === f.pageId && p.enabled) && (!chosen || f.id === chosen));
   if (!forms.length) throw new Error('No hay formularios activos seleccionados para sincronizar.');
   if (!chosen) throw new Error('Selecciona un solo formulario para evitar superar el límite de Meta.');
   const jobs: Array<{ formId: string; queued: boolean; reason?: string; runId?: string }> = [];
-  for (const form of forms) jobs.push({ formId: form.id, ...(await scheduleForm(form, { historical: input.historical === true, retryReview: input.retryReview === true })) });
+  for (const form of forms) jobs.push({ formId: form.id, ...(await scheduleForm(form, { historical: input.historical === true, retryReview: input.retryReview === true, forceOnce })) });
   return { jobs };
 }
