@@ -20,6 +20,12 @@ const extractFilter = (filter = '') => {
 export class RestApiClient {
   constructor(options) { if (options?.runAs !== 'application') throw Error('Test requires application role'); }
   async get(path, {query} = {}) {
+    if (/^\\/rest\\/people\\/[0-9a-f-]{36}$/i.test(path)) {
+      const id=path.split('/').at(-1);
+      const person=memory.people.get(id);
+      if (!person || person.deletedAt) throw Object.assign(new Error('Record not found'),{status:404});
+      return {data:{person}};
+    }
     if (path === '/rest/metadata/objects') return {data:{objects:[{id:'person-meta',nameSingular:'person',fields:[{name:'sourceCampaign',label:'Campaña',type:'TEXT',isCustom:true}]}]}};
     if (path === '/rest/metadata/fields') return {data:{fields:[]}};
     if (path === '/rest/people') {
