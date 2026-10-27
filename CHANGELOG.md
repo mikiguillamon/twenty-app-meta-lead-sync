@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.9 — 2026-10-27
+
+- «Buscar formularios» pasa a «Actualizar formularios» para distinguir el descubrimiento en Meta de la búsqueda local.
+- Separación entre guardar y el primer bloque de formularios.
+- Eliminados textos redundantes de actualización de Personas y credenciales.
+
 ## 0.1.8 — 2026-10-27
 
 - Búsqueda por nombre e identificador en páginas y formularios, contadores de elementos activos y visibles.
