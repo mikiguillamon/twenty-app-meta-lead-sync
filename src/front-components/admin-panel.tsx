@@ -7,7 +7,8 @@ import type { HistoryEvent, MappingRule, MetaForm, MetaPage, PersonField, Worksp
 
 type Screen = 'connections'|'pages'|'forms'|'mapping'|'sync';
 type FormState = { formId: string; activeRunId?: string; lastSuccessAt?: string; lastAttemptAt?: string; lastError?: string; lastResult?: Record<string, number> };
-type AdminData = { quota?: {pausedUntil:string;reason:string;usagePercent?:number}|null; config: WorkspaceConfig; states: FormState[]; history: HistoryEvent[]; fields: PersonField[];
+type AuditEvent = { at:string;runId:string;formId:string;kind:string;level:string;page?:number;httpStatus?:number;metaCode?:number;imported?:number;linked?:number;duplicate?:number;review?:number };
+type AdminData = { audit?:AuditEvent[]; quota?: {pausedUntil:string;reason:string;usagePercent?:number}|null; config: WorkspaceConfig; states: FormState[]; history: HistoryEvent[]; fields: PersonField[];
   metadataError?: string; credentials: { systemConfigured: boolean; pageTokensConfigured: boolean } };
 const api = new RestApiClient();
 type ThemeStyles = ReturnType<typeof createStyles>;
@@ -46,6 +47,7 @@ export function AdminPanel({screen}:{screen:Screen}) {
   const [mappingFormId,setMappingFormId] = useState<string>('');
   const [syncFormId,setSyncFormId] = useState<string>('');
   const [retryReview,setRetryReview] = useState(false);
+  const [confirmForce,setConfirmForce] = useState(false);
   const refresh = useCallback(async () => {
     const result = await api.get('/s/meta-sync/state') as AdminData;
     setData(result); setConfig(result.config);
@@ -204,6 +206,8 @@ export function AdminPanel({screen}:{screen:Screen}) {
           <Button styles={styles} primary disabled={busy||!syncFormId||!!quotaPause} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),retryReview}),'Trabajo de sincronización encolado. Consulta el historial después de actualizar.')}>Sincronizar ahora</Button>
           <Button styles={styles} disabled={busy||!syncFormId||!!quotaPause} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),historical:true,retryReview}),'Importación histórica encolada (hasta 90 días).')}>Importar histórico (90 días)</Button>
           <Button styles={styles} disabled={busy} onClick={()=>void run(async()=>{},'Estado e historial actualizados.')}>Actualizar estado</Button>
+          <label style={{display:'flex',gap:8,marginTop:12,fontSize:13}}><input style={checkStyle} type="checkbox" checked={confirmForce} onChange={e=>setConfirmForce(e.target.checked)}/>Confirmo que quiero saltar una vez la pausa local de Meta. Meta puede seguir rechazando la petición. Máximo un lote; sin histórico.</label>
+          <Button styles={styles} disabled={busy||!syncFormId||!confirmForce} onClick={()=>void run(async()=>{await api.post('/s/meta-sync/manual',{formId:syncFormId,forceOnce:true,confirmForce:true,retryReview});setConfirmForce(false);},'Prueba forzada encolada (un solo lote).')}>Forzar prueba (máx. 25 leads)</Button>
         </section>
         <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Estado por formulario</h4>
           {data?.states.length?data.states.map(st=><div key={st.formId} style={{borderBottom:'1px solid '+theme.divider,padding:'10px 0'}}>
@@ -211,6 +215,15 @@ export function AdminPanel({screen}:{screen:Screen}) {
             <div style={small}>Último éxito: {st.lastSuccessAt?new Date(st.lastSuccessAt).toLocaleString():'Nunca'} · Último intento: {st.lastAttemptAt?new Date(st.lastAttemptAt).toLocaleString():'Nunca'}</div>
             {st.lastError && <div style={{color:theme.errorText,fontSize:13}}>Error: {st.lastError}</div>}
           </div>):<p style={small}>No hay formularios configurados.</p>}
+        </section>
+        <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Auditoría técnica (sin datos personales)</h4>
+          <p style={small}>Eventos de los últimos 14 días asociados al historial disponible. Selecciona el JSON y cópialo para compartir incidencias.</p>
+          <textarea readOnly value={JSON.stringify(data?.audit??[],null,2)} style={{...inputStyle,minHeight:110,maxHeight:240,fontFamily:'monospace',fontSize:11}} />
+          {(data?.audit??[]).slice(0,60).map((e,i)=><div key={e.runId+'-'+i} style={{borderBottom:'1px solid '+theme.divider,padding:'7px 0',fontSize:12}}>
+            <strong>{new Date(e.at).toLocaleString()}</strong> · {e.level} · {e.kind} · {forms.find(f=>f.id===e.formId)?.name??e.formId} · Run {e.runId.slice(0,8)}
+            {e.httpStatus!==undefined?' · HTTP '+e.httpStatus:''}{e.metaCode!==undefined?' · Meta '+e.metaCode:''}{e.page!==undefined?' · Lote '+e.page:''}
+          </div>)}
+          {!data?.audit?.length&&<p style={small}>Sin eventos de auditoría todavía.</p>}
         </section>
         <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Últimas ejecuciones</h4>
           <div style={{overflowX:'auto'}}><table style={{borderCollapse:'collapse',width:'100%',fontSize:13}}><thead><tr>{['Finalizado','Formulario','Estado','Nuevos','Vinculados','Duplicados','Revisión','Fallidos'].map(x=><th key={x} style={{textAlign:'left',padding:7,borderBottom:'1px solid '+theme.border,color:theme.textMuted}}>{x}</th>)}</tr></thead>
