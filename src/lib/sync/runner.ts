@@ -2,6 +2,7 @@ import { enqueueJobs, RetryableLogicFunctionError } from 'twenty-sdk/logic-funct
 import { IDS } from '../../constants/ids.ts';
 import { MetaGraphClient, MetaGraphError, parsePageTokens, resolvePageToken } from '../meta/graph.ts';
 import { processLead } from './process-lead.ts';
+import { assertMetaQuotaAvailable, getActiveMetaQuota, MetaQuotaPausedError } from '../meta/rate-limit.ts';
 import { getWritablePersonFields } from '../twenty/api.ts';
 import { blankCounters } from '../types.ts';
 import { sumCounters } from './policy.ts';
@@ -14,6 +15,7 @@ const graph = new MetaGraphClient();
 const maxPages = 400; // 25 leads per page; exceeds normal run sizes -> explicit failure instead of silent truncation.
 
 export async function scheduleForm(form: MetaForm, options: { historical?: boolean; retryReview?: boolean } = {}): Promise<{ queued: boolean; reason?: string; runId?: string }> {
+  await assertMetaQuotaAvailable();
   const st = await loadFormState(form.id);
   if (isRunActive(st, Date.now())) return { queued: false, reason: 'El formulario ya tiene una importación en curso.' };
   const runId = crypto.randomUUID();
@@ -69,6 +71,7 @@ export async function runFormPage(job: FormJob, retryCount: number, maxRetries: 
   const state = await loadFormState(job.formId);
   if (!session || !form || state.activeRunId !== job.runId) return { done: true };
   try {
+    await assertMetaQuotaAvailable();
     // A previous attempt may have already committed this page before the next enqueue failed.
     if (session.lastCommittedPage?.page === job.page) {
       await continueAfterPage(session, job, session.lastCommittedPage.after);
@@ -105,6 +108,11 @@ export async function runFormPage(job: FormJob, retryCount: number, maxRetries: 
     return { done: !result.after, stats: session.stats };
   } catch (e) {
     const reason = safeError(e);
+    if (e instanceof MetaQuotaPausedError || await getActiveMetaQuota()) {
+      // Abort current run without marking the cursor as successful. Cron resumes after the pause.
+      await finalize(session, reason);
+      return { done: true, stats: session.stats };
+    }
     const retryable = (e instanceof MetaGraphError && e.retryable) ||
       reason.includes('Otro trabajo') || reason.includes('reclamado');
     if (retryable && retryCount < Math.min(maxRetries, 3)) throw new RetryableLogicFunctionError(reason);
