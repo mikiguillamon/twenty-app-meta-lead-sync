@@ -1,7 +1,7 @@
 import type { MetaForm, MetaLead, PersonField } from '../types.ts';
 import { safeError, requireMetaId } from '../validation.ts';
 import { mapLeadToPerson } from '../mapping/person.ts';
-import { findLedger, claimLedger, patchLedger, findMatchingPerson, createPerson, updatePerson } from '../twenty/api.ts';
+import { findLedger, claimLedger, patchLedger, findMatchingPerson, createPerson, PersonCreationUncertainError, updatePerson } from '../twenty/api.ts';
 
 export type LeadOutcome = 'imported' | 'linked' | 'duplicate' | 'review';
 
@@ -38,10 +38,14 @@ export async function processLead(lead: MetaLead, form: MetaForm, fields: Person
       await patchLedger(ledger.id, { status: 'PROCESSED', personRecordId: existing, failureReason: '' });
       return 'linked';
     }
-    const personId = await createPerson(result.draft);
+    const personId = await createPerson(result.draft, result.email, result.phone);
     await patchLedger(ledger.id, { status: 'PROCESSED', personRecordId: personId, failureReason: '' });
     return 'imported';
   } catch (e) {
+    if (e instanceof PersonCreationUncertainError) {
+      await patchLedger(ledger.id, { status: 'NEEDS_REVIEW', failureReason: safeError(e) });
+      return 'review';
+    }
     await patchLedger(ledger.id, { status: 'FAILED', failureReason: safeError(e) });
     throw e;
   }

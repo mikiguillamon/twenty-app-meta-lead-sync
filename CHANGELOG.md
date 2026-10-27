@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.6 — 2026-10-27
+
+- Recuperar el identificador de Persona creada aunque Twenty devuelva un envelope REST diferente o una respuesta sin ID; búsqueda posterior por email/teléfono.
+- Ante resultado ambiguo, dejar el ledger en NEEDS_REVIEW y evitar un segundo POST automático.
+- Regresión de importación idempotente y creación sin ID en respuesta.
+
 ## 0.1.5 — 2026-10-27
 
 - Auditoría técnica por ejecución (runId/formId, estado, páginas, contadores, códigos HTTP/Meta), sin credenciales ni payloads.
