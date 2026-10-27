@@ -181,7 +181,7 @@ export function AdminPanel({screen}:{screen:Screen}) {
         </section>}
       </>}
       {screen==='sync' && <>
-        <Subhead styles={styles} title="Sincronización e historial" description="Una ejecución de cron cada minuto comprueba la frecuencia elegida en este workspace. Los trabajos se realizan en lotes." />
+        <Subhead styles={styles} title="Sincronización e historial" description="El cron revisa cada minuto, pero ejecuta un formulario por vez. Los límites de Meta pausan las solicitudes de este workspace." />
         <section style={spacing}>
           <label style={{display:'block',...labelStyle}}>Intervalo automático</label>
           <select style={{...inputStyle,maxWidth:260}} value={config.intervalMinutes} onChange={e=>setConfig(c=>c?{...c,intervalMinutes:Number(e.target.value) as WorkspaceConfig['intervalMinutes']}:c)}>
@@ -192,12 +192,12 @@ export function AdminPanel({screen}:{screen:Screen}) {
         <section style={spacing}>
           <label style={{display:'block',...labelStyle}}>Formulario para sincronizar</label>
           <select style={inputStyle} value={syncFormId} onChange={e=>setSyncFormId(e.target.value)}>
-            <option value="">Todos los formularios activos</option>
+            <option value="">Selecciona un formulario (uno por ejecución)</option>
             {forms.filter(f=>f.enabled).map(f=><option key={f.id} value={f.id}>{f.name}</option>)}
           </select>
           <label style={{display:'flex',gap:8,marginTop:9,fontSize:13}}><input style={checkStyle} type="checkbox" checked={retryReview} onChange={e=>setRetryReview(e.target.checked)}/>Reprocesar también entradas NEEDS_REVIEW (tras corregir el mapeo)</label>
-          <Button styles={styles} primary disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),retryReview}),'Trabajo de sincronización encolado. Consulta el historial después de actualizar.')}>Sincronizar ahora</Button>
-          <Button styles={styles} disabled={busy} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),historical:true,retryReview}),'Importación histórica encolada (hasta 90 días).')}>Importar histórico (90 días)</Button>
+          <Button styles={styles} primary disabled={busy||!syncFormId} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),retryReview}),'Trabajo de sincronización encolado. Consulta el historial después de actualizar.')}>Sincronizar ahora</Button>
+          <Button styles={styles} disabled={busy||!syncFormId} onClick={()=>void run(()=>api.post('/s/meta-sync/manual',{...(syncFormId?{formId:syncFormId}:{}),historical:true,retryReview}),'Importación histórica encolada (hasta 90 días).')}>Importar histórico (90 días)</Button>
           <Button styles={styles} disabled={busy} onClick={()=>void run(async()=>{},'Estado e historial actualizados.')}>Actualizar estado</Button>
         </section>
         <section style={spacing}><h4 style={{marginTop:0,color:theme.text}}>Estado por formulario</h4>
