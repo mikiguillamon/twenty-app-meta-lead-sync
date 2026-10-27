@@ -26,7 +26,7 @@ globalThis.fetch=async (url, options)=>{
 };
 const {scheduleForm,runFormPage}=await import('../src/lib/sync/runner.ts');
 const {saveConfig,loadFormState,loadHistory,loadSession}=await import('../src/lib/sync/state.ts');
-const {RetryableLogicFunctionError}=await import('twenty-sdk/logic-function');
+const {getActiveMetaQuota}=await import('../src/lib/meta/rate-limit.ts');
 const form={id:FORM,pageId:PAGE,name:'Form QA',enabled:true,questions:[{key:'full_name',label:'Nombre'},{key:'email',label:'Email'},{key:'campaign',label:'Campaign'}],
   mappings:[{questionKey:'full_name',target:'name.fullName'},{questionKey:'email',target:'emails.primaryEmail'},{questionKey:'campaign',target:'sourceCampaign'}]};
 const config={version:1,intervalMinutes:5,pages:[{id:PAGE,name:'QA Page',enabled:true}],forms:[form]};
