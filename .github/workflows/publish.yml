@@ -1,0 +1,58 @@
+name: Publish Twenty app to npm (manual release only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type PUBLISH to authorize public npm release'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event.inputs.confirmation == 'PUBLISH'
+    runs-on: ubuntu-latest
+    environment: npm-publication
+    timeout-minutes: 20
+    steps:
+      - name: Ensure a manually selected version tag
+        env:
+          RELEASE_REF: ${{ github.ref }}
+        run: |
+          case "$RELEASE_REF" in
+            refs/tags/v*) echo "Release tag selected: $RELEASE_REF" ;;
+            *) echo "Select an existing v* tag in Run workflow (not main/branch)."; exit 1 ;;
+          esac
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.5.0'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Enable Corepack and install locked dependencies
+        run: |
+          corepack enable
+          yarn install --immutable
+      - name: Verify public package metadata, version and selected tag
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: node scripts/release-preflight.mjs --public --tag "$RELEASE_TAG"
+      - name: Run type checks and tests
+        run: |
+          yarn typecheck
+          yarn test
+      - name: Build Twenty application
+        run: yarn build
+      - name: Install supported npm CLI for OIDC
+        run: npm install --global 'npm@^11.5.1'
+      - name: Publish with Twenty CLI and provenance
+        run: yarn twenty app:publish

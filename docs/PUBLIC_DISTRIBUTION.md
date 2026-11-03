@@ -1,6 +1,8 @@
 # Public distribution checklist — Meta Lead Sync for Twenty
 
-The current v0.2.0-beta.2 source is a **private tarball** installed on the author's Twenty instance. Publishing to npm is a distinct distribution mechanism. Do not publish the current private package under its deployment-specific name.
+The current v0.2.0-beta.4 source is a **private tarball** installed on the author's Twenty instance. Publishing to npm is a distinct distribution mechanism. Do not publish the current private package under its deployment-specific name.
+
+For the full step-by-step release process, see [PUBLIC_RELEASE_RUNBOOK.md](PUBLIC_RELEASE_RUNBOOK.md).
 
 ## Supported distribution
 

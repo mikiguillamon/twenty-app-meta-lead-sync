@@ -1,11 +1,13 @@
 # Publicación en el marketplace de Twenty
 
+**Guía operativa vigente:** [PUBLIC_RELEASE_RUNBOOK.md](PUBLIC_RELEASE_RUNBOOK.md). Este documento es un checklist; la publicación pública permanece bloqueada mientras el paquete sea privado.
+
 ## Solo después de probar una beta privada
 
 El paso a marketplace público **no** se realiza con el primer ZIP. Primero valida instalación, consumo, seguridad, metadatos, tokens, paginación y comportamiento de los leads con el workspace JFF y otro de ensayo.
 
 1. Actualizar `README`, documentación, capturas, política de privacidad y soporte.
-2. Decidir nombre npm estable, p. ej. `twenty-app-meta-lead-sync-jff`, y mantener sus UUID universales constantes.
+2. Decidir nombre npm estable e independiente del servidor JFF, p. ej. `@TU_SCOPE/twenty-app-meta-lead-sync`, verificar la propiedad del scope y conservar los UUID universales.
 3. Publicar el repositorio públicamente (si se desea provenance/verificación de propiedad con GitHub).
 4. Dar acceso a npm y configurar Trusted Publisher para el repositorio GitHub.
 5. Asegurar `keywords: ["twenty-app"]`, metadata del manifest, licencia MIT, compatibilidad `engines.twenty` y versionado semver.

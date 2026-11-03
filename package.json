@@ -1,8 +1,8 @@
 {
   "name": "twenty-app-meta-lead-sync-jff",
-  "version": "0.2.0-beta.3",
+  "version": "0.2.0-beta.4",
   "private": true,
-  "description": "Private beta: per-workspace Meta Lead Ads polling integration for Twenty CRM",
+  "description": "Sync Meta Lead Ads into Twenty CRM People with per-workspace settings, field mapping and deduplication",
   "license": "MIT",
   "type": "module",
   "packageManager": "yarn@4.13.0",
@@ -22,7 +22,8 @@
     "build": "twenty dev:build",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "node --experimental-strip-types --experimental-loader ./tests/fixtures/sdk-loader.mjs --test tests/*.test.mjs",
-    "check": "yarn typecheck && yarn test && yarn build"
+    "check": "yarn typecheck && yarn test && yarn build",
+    "release:check": "node scripts/release-preflight.mjs"
   },
   "devDependencies": {
     "@types/node": "^24.7.2",
@@ -33,5 +34,13 @@
     "twenty-client-sdk": "2.50.0",
     "twenty-sdk": "2.50.0",
     "typescript": "^5.9.3"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikiguillamon/twenty-app-meta-lead-sync.git"
+  },
+  "homepage": "https://github.com/mikiguillamon/twenty-app-meta-lead-sync#readme",
+  "bugs": {
+    "url": "https://github.com/mikiguillamon/twenty-app-meta-lead-sync/issues"
   }
 }
