@@ -1,52 +1,57 @@
-# Twenty Marketplace — Release acceptance and claiming
+# Twenty Marketplace — publication, claiming and release checklist
 
-**Status:** npm package `twenty-meta-lead-sync@0.2.0-beta.8` was published with signed GitHub Actions provenance. Version `0.2.0` in this branch is a **candidate only**: not published or signed yet. Do not ship it before the tests below.
+## Current status
 
-## How the catalog discovers the app
+- The public npm prerelease `twenty-meta-lead-sync@0.2.0-beta.8` was published with GitHub Actions OIDC and signed provenance.
+- The application was discovered in the npm catalog, successfully **claimed by the intended JFF owner workspace**, installed from the Marketplace and manually verified by the maintainer.
+- `0.2.0` is the planned first stable release. It must be published through a GitHub Release on a commit in `main`; creating or merging a PR does not publish it.
+- Compatibility declared and tested: **Twenty 2.50.x**. Do not widen `engines.twenty` without actual compatibility testing. Newer Twenty versions (including 2.55.x) are not yet certified.
 
-1. The public npm package must have the keyword `twenty-app`, a valid Twenty `manifest.json` and source metadata (name, description, logo and author). Community apps require the **Vetted only** filter to be disabled.
-2. Twenty 2.50 syncs package metadata from the npm registry approximately hourly; admins may trigger `twenty dev:catalog-sync --remote <remote>` on a safe test instance.
-3. The server filters apps by `engines.twenty`; this app currently declares `>=2.50.0 <2.51.0`, so do not promise compatibility with other versions.
-4. npm search metadata can select an older `latest` dist-tag. Verify the npm search result and dist-tags before claiming. Publishing a beta to npm does not automatically promote that beta to `latest`; do not mislabel a beta as stable just to make it discoverable.
+## How marketplace distribution works
 
-## Important: existing private JFF registration
+1. Publish with the Twenty packaging CLI through GitHub Actions. The npm package must include `twenty-app` in `keywords`, a valid `manifest.json`, and a `latest` dist-tag on the intended stable release.
+2. Twenty instances discover packages via periodic npm catalog sync; users may need to disable **Vetted only** to see community applications.
+3. Marketplace distribution is independent of claiming: each Twenty **instance** has its own application registration and owner workspace. Claiming does not install an app.
+4. On self-hosted instances, **Claim with GitHub** requires `APP_CLAIM_GITHUB_CLIENT_ID` and `APP_CLAIM_GITHUB_CLIENT_SECRET` configured on the Twenty server, with callback `<SERVER_URL>/application-registration-claim/github/callback`. The GitHub account must own the source repository or the publishing organization.
+5. A local or private **TARBALL** registration using the same application `universalIdentifier` prevents creation of a new npm registration on the same Twenty instance. Remove any obsolete private installation and its registration via the supported Twenty UI only when it is safe to do so; do not change UUIDs or edit database rows manually.
 
-A private TAR archive registration already uses this app's `universalIdentifier` on JFF. Twenty 2.50's `upsertFromCatalog` refuses to overwrite a registration whose `sourceType` is not NPM. This is expected; do not delete or uninstall the private JFF app merely to test registry claiming.
+## Confirmed acceptance and remaining QA
 
-Use a separate clean Twenty 2.50 instance for testing the npm registration. A second workspace on the **same JFF instance is not sufficient**, because app registrations are global to the instance.
+- [x] npm prerelease built and published with GitHub Actions provenance
+- [x] npm catalog discovers app and correct version
+- [x] JFF claim and ownership transfer completed
+- [x] Public NPM Marketplace installation verified by maintainer on Twenty 2.50.x
+- [x] Static CI: typecheck, tests and build passing
+- [ ] Independently verify all configurations and Meta permission combinations, polling edge cases and multi-workspace isolation before claiming broad production certification
+- [ ] Review retention/deletion of old lead answers and GDPR obligations
+- [ ] Add **real** gallery screenshots, without personal data, when available (optional for community listing)
+- [ ] Check stable release npm provenance and `latest` dist-tag after publication
 
-## Claim with GitHub (on clean instance)
+The maintainer's functional verification of the installed app is recorded as such; it must not be presented as comprehensive security, compliance or load testing.
 
-1. Verify that the catalog includes a package version with GitHub provenance and is compatible with the isolated Twenty server.
-2. Open `Settings → Developers → Apps` in the workspace intended to own the registration (requires Workspace Apps and Developers permissions).
-3. Under **Claim an application**, look up `twenty-meta-lead-sync` (or `src/constants/ids.ts` application UUID). If not found, use **Sync catalog** if available and retry after sync.
-4. **Claim with GitHub** using the GitHub account that owns the source repo (a collaborator is not sufficient).
-5. Verify that it appears in **My apps**, has source type **NPM**, and **Distribution → Ownership** says **Claimed by this workspace**.
-6. Claim is **not** an installation. Install the app in the owner workspace; then install in an independent second workspace to check credential and data isolation.
+## Publishing the stable version
 
-### Self-hosted GitHub OAuth requirement
-
-On a self-hosted Twenty instance, claim requires its administrator to register a GitHub OAuth app and set `APP_CLAIM_GITHUB_CLIENT_ID` and `APP_CLAIM_GITHUB_CLIENT_SECRET`. The GitHub OAuth authorization callback is `<SERVER_URL>/application-registration-claim/github/callback`. Do not add those secrets to GitHub, source code, this repository or npm. Twenty Cloud provides these settings as part of the service.
-
-## Release gates before 0.2.0 stable
-
-- [ ] npm catalog entry resolves a version with provenance from `mikiguillamon/twenty-meta-lead-sync`.
-- [ ] Clean installation and successful GitHub claim on separate compatible Twenty instance.
-- [ ] Installation in two distinct workspaces and no shared Meta credentials, mappings, KVs or People.
-- [ ] Meta System User and Page tokens tested with appropriately scoped test accounts.
-- [ ] Forms, custom field mapping, history, polling, rate limiting and dedup tested with synthetic leads.
-- [ ] Permission-denied flows and redacted audit logs tested.
-- [ ] Retention/deletion of historical Meta answers and GDPR response documented and verified.
-- [ ] README, logo, support and manifest metadata reviewed; real screenshots optional until provided, not fabricated.
-- [ ] Stable `0.2.0` release approved in PR, its GitHub Release published through OIDC and npm `latest` checked.
-- [ ] Existing JFF production tarball registration untouched pending explicit migration plan.
-
-## Verification commands
+After PR checks are green and the package version on `main` equals `0.2.0`:
 
 ```bash
+gh auth status
+git switch main
+git fetch origin
+git pull --ff-only origin main
+git status --short
+node scripts/release-preflight.mjs --public --tag v0.2.0
+gh release create v0.2.0 --target "$(git rev-parse HEAD)" --title "Meta Lead Sync v0.2.0" --generate-notes --latest=true
+gh run list --workflow publish.yml --limit 5
 npm view twenty-meta-lead-sync dist-tags --json
-npm view twenty-meta-lead-sync versions --json
-npm view twenty-meta-lead-sync@beta version
 ```
 
-See [Public distribution checklist](PUBLIC_DISTRIBUTION.md), [QA](QA.md) and [Twenty publishing docs](https://docs.twenty.com/developers/extend/apps/operations/publishing).
+The **stable** release must not be marked `--prerelease`. The GitHub Release `published` event invokes the npm OIDC publishing workflow and promotes `latest` to `0.2.0`.
+
+If publication fails, diagnose the workflow before creating a different version or Release. Do not reuse a published npm version.
+
+## References
+
+- [Twenty app publishing and claiming](https://docs.twenty.com/developers/extend/apps/operations/publishing)
+- [Twenty application metadata](https://docs.twenty.com/developers/extend/apps/config/application)
+- [Project release runbook](PUBLIC_RELEASE_RUNBOOK.md)
+- [QA checklist](QA.md)
