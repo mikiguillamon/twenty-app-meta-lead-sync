@@ -72,7 +72,15 @@
 6. Configura Trusted Publisher; el candidato `0.2.0-beta.7` se publicará con tag de Git y workflow manual. Solo entonces tendrá provenance emitida desde GitHub.
 7. La presencia en npm no implica que tu instancia JFF ya esté migrada desde el tarball; prueba el catálogo en una instancia separada.
 
-## Siguiente publicación: v0.2.0-beta.7 por OIDC
+## Standard release workflow (starting with beta.8)
+
+After this PR is merged, publication is triggered only by **publishing a GitHub Release** for a new tag based on a tested `main` commit. No `workflow_dispatch`, `PUBLISH` input or GitHub Environment is needed. The workflow validates Release tag/version, prerelease flag, commit ancestry, tests and build. Releases marked prerelease publish to npm `beta`; stable releases publish to `latest`.
+
+**ONE-TIME MIGRATION BEFORE PUBLISHING:** On npm package `twenty-meta-lead-sync`, remove the old Trusted Publisher configured with `npm-publication` and create a new GitHub Actions Trusted Publisher with owner `mikiguillamon`, repository `twenty-meta-lead-sync`, workflow `publish.yml`, and **blank Environment**. Enable direct **npm publish** (not staging-only). There is no need to delete GitHub's old `npm-publication` Environment: the new workflow does not refer to it. Do not publish a Release until this is configured.
+
+To publish beta.8: `git pull origin main && corepack yarn install --immutable && corepack yarn check && node scripts/release-preflight.mjs --public --tag v0.2.0-beta.8`. In GitHub Releases, click **Draft a new release** → create tag `v0.2.0-beta.8` on the current tested `main` commit → check **Set as a pre-release** → **Publish release**. Monitor Actions, then `npm view twenty-meta-lead-sync dist-tags --json` and the npm provenance details. Do not reuse the beta.7 tag, even if its failed workflow did not publish. Keep JFF private deployment unchanged.
+
+## Historical workflow (v0.2.0-beta.7 — superseded, do not execute) por OIDC
 
 1. En el paquete https://www.npmjs.com/package/twenty-meta-lead-sync, abre **Settings → Trusted Publishers → Add trusted publisher** (GitHub Actions).
 2. Introduce: GitHub owner `mikiguillamon`, repository `twenty-meta-lead-sync`, workflow file `publish.yml`; Environment `npm-publication` si la configuración de npm ofrece ese campo. Guarda.
