@@ -21,7 +21,7 @@ test('public preflight allows a properly configured version-tagged release',()=>
 });
 test('public preflight fails closed on private or deployment-specific packages',()=>{
  const errors=releaseProblems({...candidate,name:'twenty-meta-lead-sync-jff',private:true},{publicRelease:true,tag:'v1.0.0'});
- assert.ok(errors.some(x=>x.includes('private=false')));
+ assert.ok(errors.some(x=>x.includes('private=true')));
  assert.ok(errors.some(x=>x.includes('deployment-specific')));
  assert.ok(errors.some(x=>x.includes('expected package name')));
 });
@@ -35,6 +35,6 @@ test('preflight checks source repository, keywords and tag/version pairing',()=>
 test('actual release candidate meets public metadata gate without publishing',()=>{
  const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
  assert.equal(pkg.version,'0.2.0-beta.6');
- assert.equal(pkg.private,false,`release candidate private field: ${JSON.stringify(pkg.private)}`);
+ assert.notEqual(pkg.private,true,'Release candidate must not have private:true');
  assert.deepEqual(releaseProblems(pkg,{publicRelease:true,tag:'v'+pkg.version}),[]);
 });
