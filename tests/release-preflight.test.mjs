@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { releaseProblems } from '../scripts/release-preflight.mjs';
 
 const candidate={
- name:'@example/twenty-meta-lead-sync',
+ name:'twenty-meta-lead-sync',
  version:'1.0.0',
  private:false,
  description:'Meta Lead Ads integration for Twenty CRM People with polling and field mappings',
@@ -22,6 +22,7 @@ test('public preflight fails closed on private or deployment-specific packages',
  const errors=releaseProblems({...candidate,name:'twenty-meta-lead-sync-jff',private:true},{publicRelease:true,tag:'v1.0.0'});
  assert.ok(errors.some(x=>x.includes('private=false')));
  assert.ok(errors.some(x=>x.includes('deployment-specific')));
+ assert.ok(errors.some(x=>x.includes('expected package name')));
 });
 test('preflight checks source repository, keywords and tag/version pairing',()=>{
  const errors=releaseProblems({...candidate,keywords:[],repository:{url:'https://github.com/other/repo'}},{publicRelease:true,tag:'v1.0.1'});
