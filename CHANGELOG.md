@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0-beta.4 — 2026-11-03
+
+- Prepare release preflight checks and tests; public publishing remains blocked while the private package name and ownership are unresolved.
+- Add a manually triggered, environment-protected npm OIDC/provenance workflow; no automatic publication and no npm secrets.
+- Add source repository and issue-report metadata and clarify marketplace application-variable labels.
+- Add a release runbook covering ownership, first publication, private-tarball migration, QA and historical lead privacy.
+
 ## 0.2.0-beta.3 — 2026-10-27
 
 - Use Twenty 2.50 `useLocale()` to automatically follow the active workspace UI language (Spanish or English), including live changes.
