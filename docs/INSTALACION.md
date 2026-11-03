@@ -13,7 +13,7 @@
 ## 1. Crear repositorio en GitHub
 
 1. Descarga el ZIP proporcionado y **descomprímelo** en tu Mac.
-2. En GitHub, crea un repositorio **privado** llamado, por ejemplo, `twenty-app-meta-lead-sync`.
+2. En GitHub, usa el repositorio público existente `twenty-meta-lead-sync`.
 3. Abre Terminal en la carpeta descomprimida y ejecuta (cambia la URL del repositorio si utilizas otro nombre):
 
 ```bash
@@ -21,7 +21,7 @@ git init
 git branch -M main
 git add .
 git commit -m "Initial native Meta Lead Sync Twenty app"
-git remote add origin git@github.com:mikiguillamon/twenty-app-meta-lead-sync.git
+git remote add origin git@github.com:mikiguillamon/twenty-meta-lead-sync.git
 git push -u origin main
 ```
 
