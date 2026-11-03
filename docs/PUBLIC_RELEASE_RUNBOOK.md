@@ -5,7 +5,7 @@
 - El repositorio de GitHub es público y tiene licencia MIT.
 - La versión actual del código usa el nombre público previsto `twenty-meta-lead-sync`, y el candidato `0.2.0-beta.6` lleva `private: false` para permitir la primera publicación controlada. El paquete privado histórico instalado en JFF se llamaba `twenty-app-meta-lead-sync-jff`; conserva los mismos identificadores internos de Twenty.
 - El flujo `.github/workflows/publish.yml` **no publica automáticamente**: únicamente se ejecuta manualmente y exige seleccionar una etiqueta `vX.Y.Z`, escribir `PUBLISH`, pasar la protección del entorno `npm-publication` y superar pruebas, compilación y preflight.
-- **Estado:** el usuario confirmó sesión en npm como `mikiguillamon`; `npm view twenty-meta-lead-sync version` devolvió 404 (ninguna versión pública visible, no garantiza reserva del nombre). Falta la primera publicación controlada, configurar Trusted Publisher, QA de instalación limpia y privacidad/retención.
+- **Estado (2026-11-03):** el usuario publicó con éxito `twenty-meta-lead-sync@0.2.0-beta.6` desde Twenty CLI con dist-tag `beta`. Pendiente: configurar Trusted Publisher, publicar `0.2.0-beta.7` desde GitHub Actions con provenance, QA de instalación limpia y privacidad/retención.
 
 ## Paso 1 — Elegir nombre y propietario npm (acción humana)
 
@@ -62,12 +62,26 @@
 - https://docs.twenty.com/developers/extend/apps/config/application
 - https://docs.npmjs.com/trusted-publishers
 
-## Primera publicación beta (acción manual y irreversible, NO ejecutada)
+## Primera publicación beta (COMPLETADA el 2026-11-03)
 
 1. Desde el commit de la PR fusionada, ejecuta `git pull`, `corepack yarn install --immutable`, `corepack yarn typecheck`, `corepack yarn test`, `corepack yarn build`.
 2. Inspecciona `.twenty/output` y el tarball de distribución; comprueba que no contiene `.env`, credenciales, logs reales o datos de personas. El CLI publica el contenido empaquetado, no el repositorio fuente sin compilar.
 3. Verifica `npm whoami` (`mikiguillamon`), `npm view twenty-meta-lead-sync version` (404 esperado mientras no exista), y `node scripts/release-preflight.mjs --public --tag v0.2.0-beta.6`.
 4. Solo si se aprueba el artefacto y el lanzamiento, ejecuta `corepack yarn twenty app:publish --tag beta` desde tu Mac. npm puede pedir autenticación/OTP. **Esta acción hace público el paquete y reserva su nombre**; no se puede sobrescribir la misma versión.
 5. Verifica `npm view twenty-meta-lead-sync dist-tags --json` y `npm view twenty-meta-lead-sync versions --json`; `beta` debe apuntar a `0.2.0-beta.6` y `latest` no debe apuntar a ella.
-6. Configura Trusted Publisher; realiza posteriormente otra beta (`0.2.0-beta.7` o superior) con un tag de Git y el workflow manual. Solo entonces tendrás provenance emitida desde GitHub.
+6. Configura Trusted Publisher; el candidato `0.2.0-beta.7` se publicará con tag de Git y workflow manual. Solo entonces tendrá provenance emitida desde GitHub.
 7. La presencia en npm no implica que tu instancia JFF ya esté migrada desde el tarball; prueba el catálogo en una instancia separada.
+
+## Siguiente publicación: v0.2.0-beta.7 por OIDC
+
+1. En el paquete https://www.npmjs.com/package/twenty-meta-lead-sync, abre **Settings → Trusted Publishers → Add trusted publisher** (GitHub Actions).
+2. Introduce: GitHub owner `mikiguillamon`, repository `twenty-meta-lead-sync`, workflow file `publish.yml`; Environment `npm-publication` si la configuración de npm ofrece ese campo. Guarda.
+3. En GitHub abre `Settings → Environments → New environment`; crea `npm-publication`. Restringe las etiquetas de deploy a `v*` y añade revisores obligatorios si tu plan y permisos lo permiten. El campo de entorno de npm y el valor `environment:` del workflow deben coincidir exactamente si se usan.
+4. Verifica en el registro público que `npm view twenty-meta-lead-sync dist-tags --json` muestre `beta: 0.2.0-beta.6`. La ausencia de `latest` es normal mientras solo existe una beta.
+5. Una vez aprobada la PR del siguiente candidato, `git pull origin main`, `corepack yarn install --immutable`, `corepack yarn check`, `node scripts/release-preflight.mjs --public --tag v0.2.0-beta.7`. No vuelvas a publicar beta.6: npm no permite sobrescribir la misma versión.
+6. Para crear y subir una etiqueta solo después de comprobar la configuración anterior: `git tag -a v0.2.0-beta.7 -m "Meta Lead Sync beta.7"`; `git push origin v0.2.0-beta.7`. No implica publicación automática.
+7. En GitHub → **Actions → Publish Twenty app to npm (manual release only) → Run workflow** selecciona la etiqueta exacta `v0.2.0-beta.7` e introduce `PUBLISH`; aprueba el entorno si se solicita. **Esta acción sí publica**.
+8. Comprueba las ejecuciones de Actions y `npm view twenty-meta-lead-sync dist-tags --json`; `beta` debe apuntar a `0.2.0-beta.7`. En npm busca la procedencia (*provenance*) vinculada al commit y a GitHub Actions.
+9. Cuando el catálogo de Twenty lo descubra, realiza el claim con GitHub desde una instalación de pruebas, nunca eliminando la app privada existente por precaución.
+
+El workflow se prepara para publicación manual; **la rama de beta.7, la PR y las comprobaciones no publican nada**.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0-beta.7 — 2026-11-03 (candidate, not yet published)
+
+- Prepare first GitHub Actions release using npm Trusted Publishing and automatic provenance after the 0.2.0-beta.6 manual bootstrap.
+- Release metadata only; unchanged Twenty app universal identifiers, Meta logic, credentials, forms, mapping and deduplication.
+- Subsequent publication requires npm trusted publisher configured to GitHub workflow publish.yml with environment npm-publication.
+
 ## 0.2.0-beta.6 — 2026-11-03
 
 - Prepare first npm public beta candidate (not yet published); version and release permissions updated without modifying Twenty's universal identifiers.
