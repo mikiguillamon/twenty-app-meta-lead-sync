@@ -21,8 +21,8 @@ The app imports Meta Facebook/Instagram Lead Ads into Twenty People. Every works
 Requirements: Node.js 24, Corepack/Yarn 4, Twenty 2.50.x and a workspace with application management permissions.
 
 ```bash
-git clone https://github.com/mikiguillamon/twenty-app-meta-lead-sync.git
-cd twenty-app-meta-lead-sync
+git clone https://github.com/mikiguillamon/twenty-meta-lead-sync.git
+cd twenty-meta-lead-sync
 corepack yarn install
 corepack yarn typecheck
 corepack yarn test
