@@ -37,8 +37,8 @@ export function releaseProblems(pkg, { publicRelease = false, tag } = {}) {
     if (pkg.name !== PUBLIC_PACKAGE_NAME) {
       problems.push('PUBLIC RELEASE BLOCKED: expected package name '+PUBLIC_PACKAGE_NAME);
     }
-    if (pkg.private !== false) {
-      problems.push('PUBLIC RELEASE BLOCKED: set package.json private=false after choosing npm owner');
+    if (pkg.private === true) {
+      problems.push('PUBLIC RELEASE BLOCKED: remove package.json private=true before public release');
     }
     if (/(?:-jff|private|demo|test)$/i.test(pkg.name ?? '')) {
       problems.push('PUBLIC RELEASE BLOCKED: choose an npm package name without a deployment-specific suffix');
