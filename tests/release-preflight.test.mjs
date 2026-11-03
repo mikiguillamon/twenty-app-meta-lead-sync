@@ -34,7 +34,7 @@ test('preflight checks source repository, keywords and tag/version pairing',()=>
 
 test('actual release candidate meets public metadata gate without publishing',()=>{
  const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
- assert.equal(pkg.version,'0.2.0-beta.6');
+ assert.equal(pkg.version,'0.2.0-beta.7');
  assert.notEqual(pkg.private,true,'Release candidate must not have private:true');
  assert.deepEqual(releaseProblems(pkg,{publicRelease:true,tag:'v'+pkg.version}),[]);
 });
