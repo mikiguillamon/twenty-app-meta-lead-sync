@@ -2,7 +2,7 @@
 
 Native **Meta Lead Ads → Twenty CRM** integration. No Zapier, n8n or external synchronization service required.
 
-**Languages:** English / Español. **Current source version:** 0.2.0-beta.8 (pre-release). **License:** MIT. **Compatibility tested with:** Twenty 2.50.x.
+**Languages:** English / Español. **Release candidate:** 0.2.0 (not yet published). **Published beta:** 0.2.0-beta.8. **License:** MIT. **Compatibility tested with:** Twenty 2.50.x.
 
 The app imports Meta Facebook/Instagram Lead Ads into Twenty People. Every workspace manages its own Meta credentials, pages, forms, field mappings, deduplication and schedule. It **does not replace or subscribe to existing Meta webhooks**.
 
@@ -34,7 +34,15 @@ corepack yarn twenty app:install
 
 In Twenty **Settings → Applications → Meta Lead Sync**, connect Meta, discover pages, refresh forms, configure field mappings and enable synchronization. Do not enable large historical imports before verifying your permissions and Meta usage quota.
 
-**Public npm beta:** `twenty-meta-lead-sync@0.2.0-beta.6` was first published on 2026-11-03 using the npm `beta` dist-tag. This source prepares `0.2.0-beta.8` for GitHub Actions + npm Trusted Publishing; it has **not** been published yet. Marketplace discovery and installation in a second workspace are still pending. See [Public release runbook](docs/PUBLIC_RELEASE_RUNBOOK.md) and [Public distribution checklist](docs/PUBLIC_DISTRIBUTION.md) and [Installation](docs/INSTALACION.md). Use Twenty's packaging CLI for publishing; do not run plain `npm publish` from the source root.
+## Install from Twenty Marketplace (public app)
+
+This release candidate has **not** been published as stable yet. The GitHub Actions-signed beta `0.2.0-beta.8` is available under the npm `beta` tag. For a compatible Twenty 2.50.x server, open **Settings → Applications**, disable **Vetted only** when browsing community apps, and search for **Meta Lead Sync**. If the app has not appeared, ask the server administrator to sync the app catalog.
+
+Installation is **per workspace**: connect your own Meta credentials, select your Pages and forms, map fields, and test a manual import before enabling scheduled polling. Meta Lead Ads API permissions and access to the relevant Meta Pages are required. This app does **not** require you to replace existing Meta webhooks. Only import personal data when you have a lawful basis and an appropriate retention policy.
+
+**For the maintainer:** the GitHub-backed npm release provides provenance needed to claim the marketplace registration in an intended owner workspace. Self-hosted instances may need GitHub claim OAuth configuration; see [Twenty publishing documentation](https://docs.twenty.com/developers/extend/apps/operations/publishing). Claiming the app is separate from installing it. Do not uninstall or migrate an existing tarball registration without confirming the registry identity in a clean Twenty instance.
+
+See [Public release runbook](docs/PUBLIC_RELEASE_RUNBOOK.md), [Public distribution checklist](docs/PUBLIC_DISTRIBUTION.md) and [Installation](docs/INSTALACION.md). Use Twenty's packaging CLI for publishing; do not run plain `npm publish` from the source root.
 
 ## Español
 
