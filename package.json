@@ -44,7 +44,6 @@
     "url": "https://github.com/mikiguillamon/twenty-meta-lead-sync/issues"
   },
   "publishConfig": {
-    "access": "public",
-    "tag": "beta"
+    "access": "public"
   }
 }
