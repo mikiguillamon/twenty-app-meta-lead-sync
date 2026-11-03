@@ -5,7 +5,7 @@
 - El repositorio de GitHub es público y tiene licencia MIT.
 - La versión actual del código usa el nombre público previsto `twenty-meta-lead-sync`, pero sigue con `private: true`. El paquete privado histórico instalado en JFF se llamaba `twenty-app-meta-lead-sync-jff`; conserva los mismos identificadores internos de Twenty.
 - El flujo `.github/workflows/publish.yml` **no publica automáticamente**: únicamente se ejecuta manualmente y exige seleccionar una etiqueta `vX.Y.Z`, escribir `PUBLISH`, pasar la protección del entorno `npm-publication` y superar pruebas, compilación y preflight.
-- **Aún no está lista para publicar:** falta elegir una cuenta/organización npm, confirmar nombre y disponibilidad, configurar Trusted Publisher y completar pruebas y revisión de privacidad.
+- **Aún no está lista para publicar:** el usuario eligió su cuenta personal de npm y el nombre `twenty-meta-lead-sync`, pero faltan la comprobación de disponibilidad y propiedad, la primera publicación segura, Trusted Publisher y la revisión de privacidad/QA.
 
 ## Paso 1 — Elegir nombre y propietario npm (acción humana)
 
@@ -13,7 +13,7 @@
 2. La titularidad será la cuenta personal de npm que ya utiliza el autor; no hace falta crear una organización.
 3. El usuario ha elegido el nombre sin scope `twenty-meta-lead-sync`. Comprueba que no esté ocupado en npm y que la cuenta que inicia la primera publicación sea la propietaria prevista.
 4. Conserva los `universalIdentifier` de `src/constants/ids.ts` para todas las entidades. El nombre npm puede cambiar, pero hay que comprobar la coexistencia con la app privada instalada y el proceso de migración (véase Paso 5).
-5. **No renombres el paquete por tu cuenta hasta validar la titularidad**. Este repositorio mantiene el nombre privado para que el flujo actual no se rompa.
+5. El nombre del paquete ya se actualizó en el código; permanece en modo `private: true` para impedir una publicación accidental. No cambies `private` antes de cerrar el checklist.
 
 ## Paso 2 — Preparar la versión candidata (código, después de elegir npm)
 
@@ -28,7 +28,7 @@
 
 1. La documentación actual de Twenty recomienda publicar desde GitHub Actions mediante OIDC/provenance. No guardes `NPM_TOKEN` ni pegues secretos en el repositorio.
 2. En GitHub: `Settings → Environments`, crea `npm-publication` y configura **Required reviewers** si el plan lo permite; limita la publicación a etiquetas de versión mediante reglas de deployment en el entorno.
-3. En npm, accede a las opciones del **paquete definitivo** y configura su **Trusted Publisher**, tipo GitHub Actions. Debe apuntar exactamente al propietario/repositorio `mikiguillamon/twenty-meta-lead-sync` y al archivo `publish.yml`. Si npm no permite configurar un trusted publisher antes de crear la primera versión, sigue las instrucciones del servicio para el *bootstrap* del paquete; **no ejecutes una publicación improvisada desde el Mac** sin decidir antes cómo establecer el vínculo de confianza.
+3. En npm, configura el **Trusted Publisher** del paquete, tipo GitHub Actions, con propietario `mikiguillamon`, repositorio `twenty-meta-lead-sync` y archivo `publish.yml`. En la mayoría de flujos npm esto requiere que el paquete ya exista: para la primera publicación se necesita un bootstrap autorizado con autenticación personal y 2FA; no publiques desde el Mac hasta que revisemos el nombre, el artefacto y la versión exacta. Después las siguientes versiones usarán OIDC/provenance.
 4. La publicación verificable requiere repositorio GitHub público y un flujo con `id-token: write` (incluido). En npm se utilizará la versión actual de CLI con soporte OIDC.
 5. Protege las etiquetas de release de GitHub y restringe quién puede ejecutar el workflow.
 
