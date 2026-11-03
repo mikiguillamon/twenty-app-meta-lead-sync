@@ -1,13 +1,7 @@
-## 0.2.0 — marketplace release candidate (not yet published)
-
-- Prepare user-facing listing and setup guidance for Twenty Marketplace with accurate installation instructions and privacy notes.
-- Publish metadata and About section while keeping original application and variable identifiers.
-- First non-prerelease after 0.2.0-beta.8; release only after clean installation and compatibility QA.
-- No changes to Meta sync logic, stored secrets, deduplication, or existing private workspaces.
 
 # Changelog
 
-## 0.2.0-beta.8 — 2026-11-03 (candidate; unpublished)
+## 0.2.0-beta.8 — 2026-11-03 (published with provenance)
 
 - Replace manual PUBLISH workflow and optional npm-publication GitHub Environment with GitHub Release published trigger.
 - Validate Release tag, prerelease setting, commit ancestry, package version and build before publishing via npm OIDC.
