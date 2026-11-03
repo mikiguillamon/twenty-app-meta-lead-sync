@@ -1,6 +1,6 @@
 # Public distribution checklist — Meta Lead Sync for Twenty
 
-The public npm package `twenty-meta-lead-sync@0.2.0-beta.8` was published through GitHub Actions with provenance. A separate private TAR registration remains installed on the author's Twenty instance. These are distinct distribution mechanisms, and the private registration must not be overwritten or uninstalled as part of Marketplace testing. Stable `0.2.0` remains a release candidate pending clean-instance QA.
+The public npm package `twenty-meta-lead-sync@0.2.0-beta.8` was published through GitHub Actions with provenance. The JFF registration has been claimed from the NPM catalog and the maintainer has installed and verified it successfully. Stable `0.2.0` remains pending publication.
 
 For the full step-by-step release process, see [PUBLIC_RELEASE_RUNBOOK.md](PUBLIC_RELEASE_RUNBOOK.md).
 
@@ -15,15 +15,15 @@ For the full step-by-step release process, see [PUBLIC_RELEASE_RUNBOOK.md](PUBLI
 1. **Repository and package identity:** The selected npm package name is `twenty-meta-lead-sync` (unscoped); verify npm availability and ownership, and ensure `private: true` is not set. Keep the existing application and object `universalIdentifier` values unchanged for upgrade compatibility. Verify the source GitHub repository is public before using provenance and marketplace claiming. Check source and commit history for accidentally committed secrets before switching visibility.
 2. **Bilingual UI (English + Spanish):** Localized frontend strings, labels, empty/error states, status/action text; keep Meta field names, API keys, IDs, persisted states and machine codes unchanged. Twenty 2.50 settings-menu-item titles are static per manifest; choose English titles for marketplace or use a single settings component with its own localized navigation. For a per-device preference, Twenty Remote DOM supports app-scoped `localStorage`; this is not synced across devices. A per-user Twenty app variable needs additional permission configuration.
 3. **Marketplace metadata:** English description, `author`, `category`, `websiteUrl`, `issueReportUrl`, appropriate `emailSupport` and `termsUrl` if an actual support address / policy exists. Add useful screenshots with `galleryImages` pointing to bundled files; recommended 8:5 ratio (e.g. 1600x1000), under 10 MB each. Check that the README no longer describes an untested 0.1.0 beta.
-4. **Privacy and operational readiness:** New imports no longer store `field_data` answers in the deduplication ledger. Old `metaSyncSubmissions.answers` values may still contain personal data and require a separate, authorized cleanup with backup and verified scope; do not destroy the ledger (deduplication depends on it). Review retention and uninstall behavior before release.  Verify data retention / deletion for stored Meta lead answers and audit records, permissions, secure secret storage, timeout/rate-limit behavior, uninstall semantics, GDPR user rights, and documentation. Test in a second clean Twenty 2.50 workspace with distinct Meta tokens (no cross-workspace leakage).
+4. **Privacy and operational readiness:** New imports no longer store `field_data` answers in the deduplication ledger. Old `metaSyncSubmissions.answers` values may still contain personal data and require a separate, authorized cleanup with backup and verified scope; do not destroy the ledger (deduplication depends on it). Review retention and uninstall behavior before release.  Verify data retention / deletion for stored Meta lead answers and audit records, permissions, secure secret storage, timeout/rate-limit behavior, uninstall semantics, GDPR user rights, and documentation. Separately validate multi-workspace isolation with distinct Meta credentials before claiming a complete security review.
 5. **CI and signing:** The current release workflow triggers on `GitHub Release published` and uses GitHub Actions with OIDC/provenance. No npm token is stored in GitHub. Require clean build, preflight and an integration test before declaring stable. Ensure `yarn install --immutable`, typecheck, tests, build and a real Twenty integration test pass before pushing a release tag.
 6. **Ownership / claiming:** After the package appears in the marketplace catalog, claim it via Settings > Developers > Apps > Claim an application > Claim with GitHub. Claiming requires valid provenance from a public GitHub repository. If the app uses no server routes it does not need an owner-workspace shared webhook resolver. Claiming is per Twenty instance.
 
 ## Publish / install command differences
 
 ```bash
-# Existing private testing only
-corepack yarn twenty app:publish --private --remote jff
+# Source installation into an isolated development instance only
+corepack yarn twenty app:publish --private --remote testing
 
 # PUBLIC distribution — run from GitHub Actions, not a developer workstation
 # GitHub Release triggers publish.yml, which calls twenty app:publish
