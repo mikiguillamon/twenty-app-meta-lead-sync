@@ -1,12 +1,8 @@
-name: Publish Twenty app to npm (manual release only)
+name: Publish Twenty app to npm
 
 on:
-  workflow_dispatch:
-    inputs:
-      confirmation:
-        description: 'Type PUBLISH to authorize public npm release'
-        required: true
-        type: string
+  release:
+    types: [published]
 
 permissions:
   contents: read
@@ -18,22 +14,31 @@ concurrency:
 
 jobs:
   publish:
-    if: github.event.inputs.confirmation == 'PUBLISH'
     runs-on: ubuntu-latest
-    environment: npm-publication
     timeout-minutes: 20
     steps:
-      - name: Ensure a manually selected version tag
+      - name: Check published Release tag
         env:
-          RELEASE_REF: ${{ github.ref }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+          RELEASE_PRERELEASE: ${{ github.event.release.prerelease }}
         run: |
-          case "$RELEASE_REF" in
-            refs/tags/v*) echo "Release tag selected: $RELEASE_REF" ;;
-            *) echo "Select an existing v* tag in Run workflow (not main/branch)."; exit 1 ;;
+          case "$RELEASE_TAG" in
+            v[0-9]*.[0-9]*.[0-9]*) ;;
+            *) echo "Expected a semver Release tag beginning with v"; exit 1 ;;
+          esac
+          case "$RELEASE_TAG" in
+            *-*) test "$RELEASE_PRERELEASE" = "true" || { echo "Prerelease version must be marked as a prerelease"; exit 1; } ;;
+            *) test "$RELEASE_PRERELEASE" = "false" || { echo "Stable version must not be marked as a prerelease"; exit 1; } ;;
           esac
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.release.tag_name }}
           persist-credentials: false
+          fetch-depth: 0
+      - name: Require release commit on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main || { echo "Release tag does not point to a commit in main"; exit 1; }
       - uses: actions/setup-node@v4
         with:
           node-version: '24.5.0'
@@ -42,21 +47,21 @@ jobs:
         run: |
           corepack enable
           yarn install --immutable
-      - name: Verify public package metadata, version and selected tag
+      - name: Verify metadata, version and published Release tag
         env:
-          RELEASE_TAG: ${{ github.ref_name }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
         run: node scripts/release-preflight.mjs --public --tag "$RELEASE_TAG"
-      - name: Run type checks and tests
+      - name: Typecheck and tests
         run: |
           yarn typecheck
           yarn test
       - name: Build Twenty application
         run: yarn build
-      - name: Install supported npm CLI for OIDC
+      - name: Install npm CLI supporting OIDC
         run: npm install --global 'npm@^11.5.1'
       - name: Publish prerelease to npm beta channel
-        if: contains(github.ref_name, '-')
+        if: github.event.release.prerelease == true
         run: yarn twenty app:publish --tag beta
-      - name: Publish stable release to npm latest channel
-        if: "!contains(github.ref_name, '-')"
+      - name: Publish stable to npm latest channel
+        if: github.event.release.prerelease == false
         run: yarn twenty app:publish

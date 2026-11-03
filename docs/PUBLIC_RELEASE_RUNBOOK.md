@@ -72,16 +72,16 @@
 6. Configura Trusted Publisher; el candidato `0.2.0-beta.7` se publicará con tag de Git y workflow manual. Solo entonces tendrá provenance emitida desde GitHub.
 7. La presencia en npm no implica que tu instancia JFF ya esté migrada desde el tarball; prueba el catálogo en una instancia separada.
 
-## Siguiente publicación: v0.2.0-beta.7 por OIDC
+## Standard release workflow (starting with beta.8)
 
-1. En el paquete https://www.npmjs.com/package/twenty-meta-lead-sync, abre **Settings → Trusted Publishers → Add trusted publisher** (GitHub Actions).
-2. Introduce: GitHub owner `mikiguillamon`, repository `twenty-meta-lead-sync`, workflow file `publish.yml`; Environment `npm-publication` si la configuración de npm ofrece ese campo. Guarda.
-3. En GitHub abre `Settings → Environments → New environment`; crea `npm-publication`. Restringe las etiquetas de deploy a `v*` y añade revisores obligatorios si tu plan y permisos lo permiten. El campo de entorno de npm y el valor `environment:` del workflow deben coincidir exactamente si se usan.
-4. Verifica en el registro público que `npm view twenty-meta-lead-sync dist-tags --json` muestre `beta: 0.2.0-beta.6`. La ausencia de `latest` es normal mientras solo existe una beta.
-5. Una vez aprobada la PR del siguiente candidato, `git pull origin main`, `corepack yarn install --immutable`, `corepack yarn check`, `node scripts/release-preflight.mjs --public --tag v0.2.0-beta.7`. No vuelvas a publicar beta.6: npm no permite sobrescribir la misma versión.
-6. Para crear y subir una etiqueta solo después de comprobar la configuración anterior: `git tag -a v0.2.0-beta.7 -m "Meta Lead Sync beta.7"`; `git push origin v0.2.0-beta.7`. No implica publicación automática.
-7. En GitHub → **Actions → Publish Twenty app to npm (manual release only) → Run workflow** selecciona la etiqueta exacta `v0.2.0-beta.7` e introduce `PUBLISH`; aprueba el entorno si se solicita. **Esta acción sí publica**.
-8. Comprueba las ejecuciones de Actions y `npm view twenty-meta-lead-sync dist-tags --json`; `beta` debe apuntar a `0.2.0-beta.7`. En npm busca la procedencia (*provenance*) vinculada al commit y a GitHub Actions.
-9. Cuando el catálogo de Twenty lo descubra, realiza el claim con GitHub desde una instalación de pruebas, nunca eliminando la app privada existente por precaución.
+After this PR is merged, publication is triggered only by **publishing a GitHub Release** for a new tag based on a tested `main` commit. No `workflow_dispatch`, `PUBLISH` input or GitHub Environment is needed. The workflow validates Release tag/version, prerelease flag, commit ancestry, tests and build. Releases marked prerelease publish to npm `beta`; stable releases publish to `latest`.
 
-El workflow se prepara para publicación manual; **la rama de beta.7, la PR y las comprobaciones no publican nada**.
+**ONE-TIME MIGRATION BEFORE PUBLISHING:** On npm package `twenty-meta-lead-sync`, remove the old Trusted Publisher configured with `npm-publication` and create a new GitHub Actions Trusted Publisher with owner `mikiguillamon`, repository `twenty-meta-lead-sync`, workflow `publish.yml`, and **blank Environment**. Enable direct **npm publish** (not staging-only). There is no need to delete GitHub's old `npm-publication` Environment: the new workflow does not refer to it. Do not publish a Release until this is configured.
+
+To publish beta.8: `git pull origin main && corepack yarn install --immutable && corepack yarn check && node scripts/release-preflight.mjs --public --tag v0.2.0-beta.8`. In GitHub Releases, click **Draft a new release** → create tag `v0.2.0-beta.8` on the current tested `main` commit → check **Set as a pre-release** → **Publish release**. Monitor Actions, then `npm view twenty-meta-lead-sync dist-tags --json` and the npm provenance details. Do not reuse the beta.7 tag, even if its failed workflow did not publish. Keep JFF private deployment unchanged.
+
+## Previous attempt (archived)
+
+The `v0.2.0-beta.7` workflow failed before publishing because it was executed from `refs/heads/main`, not the version tag. This was **not** an npm Environment error. The old workflow configuration is superseded; do not run its manual steps or re-use the beta.7 tag.
+
+For all future packages use the canonical Obsidian guide `50 Knowledge/Development/Publicacion npm - Estandar GitHub Actions Twenty n8n.md`. This project's specific workflow is `.github/workflows/publish.yml`.
