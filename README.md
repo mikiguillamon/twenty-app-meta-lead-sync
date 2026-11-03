@@ -2,7 +2,7 @@
 
 Native **Meta Lead Ads → Twenty CRM** integration. No Zapier, n8n or external synchronization service required.
 
-**Languages:** English / Español. **Current version:** 0.2.0-beta.6 (pre-release). **License:** MIT. **Compatibility tested with:** Twenty 2.50.x.
+**Languages:** English / Español. **Current source version:** 0.2.0-beta.7 (pre-release). **License:** MIT. **Compatibility tested with:** Twenty 2.50.x.
 
 The app imports Meta Facebook/Instagram Lead Ads into Twenty People. Every workspace manages its own Meta credentials, pages, forms, field mappings, deduplication and schedule. It **does not replace or subscribe to existing Meta webhooks**.
 
@@ -34,7 +34,7 @@ corepack yarn twenty app:install
 
 In Twenty **Settings → Applications → Meta Lead Sync**, connect Meta, discover pages, refresh forms, configure field mappings and enable synchronization. Do not enable large historical imports before verifying your permissions and Meta usage quota.
 
-**The public npm / Twenty Marketplace package has not been published yet.** This candidate is publishable but has NOT been released or installed from npm. See [Public release runbook](docs/PUBLIC_RELEASE_RUNBOOK.md) and [Public distribution checklist](docs/PUBLIC_DISTRIBUTION.md) and [Installation](docs/INSTALACION.md). Use Twenty's packaging CLI for publishing; do not run plain `npm publish` from the source root.
+**Public npm beta:** `twenty-meta-lead-sync@0.2.0-beta.6` was first published on 2026-11-03 using the npm `beta` dist-tag. This source prepares `0.2.0-beta.7` for GitHub Actions + npm Trusted Publishing; it has **not** been published yet. Marketplace discovery and installation in a second workspace are still pending. See [Public release runbook](docs/PUBLIC_RELEASE_RUNBOOK.md) and [Public distribution checklist](docs/PUBLIC_DISTRIBUTION.md) and [Installation](docs/INSTALACION.md). Use Twenty's packaging CLI for publishing; do not run plain `npm publish` from the source root.
 
 ## Español
 
