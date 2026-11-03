@@ -1,6 +1,7 @@
+
 # Changelog
 
-## 0.2.0-beta.8 — 2026-11-03 (candidate; unpublished)
+## 0.2.0-beta.8 — 2026-11-03 (published with provenance)
 
 - Replace manual PUBLISH workflow and optional npm-publication GitHub Environment with GitHub Release published trigger.
 - Validate Release tag, prerelease setting, commit ancestry, package version and build before publishing via npm OIDC.
