@@ -8,8 +8,8 @@ export default defineApplication({
   author: 'Just For Fun 360, S.L.',
   category: 'Sales',
   logo: 'public/logo.svg',
-  websiteUrl: 'https://github.com/mikiguillamon/twenty-app-meta-lead-sync',
-  issueReportUrl: 'https://github.com/mikiguillamon/twenty-app-meta-lead-sync/issues',
+  websiteUrl: 'https://github.com/mikiguillamon/twenty-meta-lead-sync',
+  issueReportUrl: 'https://github.com/mikiguillamon/twenty-meta-lead-sync/issues',
   applicationVariables: {
     META_SYSTEM_USER_TOKEN: {
       universalIdentifier: IDS.SYSTEM_TOKEN_VAR,

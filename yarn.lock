@@ -1889,21 +1889,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"twenty-app-meta-lead-sync-jff@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "twenty-app-meta-lead-sync-jff@workspace:."
-  dependencies:
-    "@types/node": "npm:^24.7.2"
-    "@types/react": "npm:^19.0.0"
-    "@types/react-dom": "npm:^19.0.0"
-    react: "npm:^19.2.0"
-    react-dom: "npm:^19.2.0"
-    twenty-client-sdk: "npm:2.50.0"
-    twenty-sdk: "npm:2.50.0"
-    typescript: "npm:^5.9.3"
-  languageName: unknown
-  linkType: soft
-
 "twenty-client-sdk@npm:2.50.0":
   version: 2.50.0
   resolution: "twenty-client-sdk@npm:2.50.0"
@@ -1916,6 +1901,21 @@ __metadata:
   checksum: 10c0/d1a545e9f986747dcf30efbb37dbf8a6a0da773a2c91ef83cc04cf7c4a90767d7bfbb223dacc293e7f5f8fdcfe431c67690d838ff9553eb24dec0c897d75dd66
   languageName: node
   linkType: hard
+
+"twenty-meta-lead-sync@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "twenty-meta-lead-sync@workspace:."
+  dependencies:
+    "@types/node": "npm:^24.7.2"
+    "@types/react": "npm:^19.0.0"
+    "@types/react-dom": "npm:^19.0.0"
+    react: "npm:^19.2.0"
+    react-dom: "npm:^19.2.0"
+    twenty-client-sdk: "npm:2.50.0"
+    twenty-sdk: "npm:2.50.0"
+    typescript: "npm:^5.9.3"
+  languageName: unknown
+  linkType: soft
 
 "twenty-sdk@npm:2.50.0":
   version: 2.50.0

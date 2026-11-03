@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0-beta.5 — 2026-11-03
+
+- Rename the npm package and GitHub references to `twenty-meta-lead-sync`, keeping the app private and all Twenty universal identifiers untouched.
+- Update Yarn workspace lockfile, release guards, documentation and marketplace metadata for renamed repository.
+- No public npm publishing or changes to Meta credentials and synchronization behavior.
+
 ## 0.2.0-beta.4 — 2026-11-03
 
 - Prepare release preflight checks and tests; public publishing remains blocked while the private package name and ownership are unresolved.
