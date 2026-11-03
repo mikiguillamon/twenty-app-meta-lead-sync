@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { releaseProblems } from '../scripts/release-preflight.mjs';
 
 const candidate={
@@ -29,4 +30,10 @@ test('preflight checks source repository, keywords and tag/version pairing',()=>
  assert.ok(errors.some(x=>x.includes('keyword')));
  assert.ok(errors.some(x=>x.includes('repository URL')));
  assert.ok(errors.some(x=>x.includes('tag must equal')));
+});
+
+test('actual release candidate meets public metadata gate without publishing',()=>{
+ const pkg=JSON.parse(readFileSync(new URL('../package.json',import.meta.url),'utf8'));
+ assert.equal(pkg.version,'0.2.0-beta.6');
+ assert.deepEqual(releaseProblems(pkg,{publicRelease:true,tag:'v'+pkg.version}),[]);
 });
