@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const REPOSITORY = 'mikiguillamon/twenty-meta-lead-sync';
+const PUBLIC_PACKAGE_NAME = 'twenty-meta-lead-sync';
 const SEMVER = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)(?:-(?:0|[1-9A-Za-z-][0-9A-Za-z.-]*))?(?:\+[0-9A-Za-z.-]+)?$/;
 const NPM_NAME = /^(?:@[a-z0-9][a-z0-9._~-]*\/)?[a-z0-9][a-z0-9._~-]*$/;
 
@@ -33,6 +34,9 @@ export function releaseProblems(pkg, { publicRelease = false, tag } = {}) {
     problems.push('Release git tag must equal v + package.json version');
   }
   if (publicRelease) {
+    if (pkg.name !== PUBLIC_PACKAGE_NAME) {
+      problems.push('PUBLIC RELEASE BLOCKED: expected package name '+PUBLIC_PACKAGE_NAME);
+    }
     if (pkg.private !== false) {
       problems.push('PUBLIC RELEASE BLOCKED: set package.json private=false after choosing npm owner');
     }
