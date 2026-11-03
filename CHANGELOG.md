@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0-beta.6 — 2026-11-03
+
+- Prepare first npm public beta candidate (not yet published); version and release permissions updated without modifying Twenty's universal identifiers.
+- Separate npm `beta` and `latest` dist-tags in the guarded GitHub Actions release workflow.
+- Add first-publication procedure and require inspection of the built tarball before an irreversible publish.
+
 ## 0.2.0-beta.5 — 2026-11-03
 
 - Rename the npm package and GitHub references to `twenty-meta-lead-sync`, keeping the app private and all Twenty universal identifiers untouched.

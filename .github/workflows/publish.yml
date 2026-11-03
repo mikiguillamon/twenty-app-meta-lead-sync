@@ -54,5 +54,9 @@ jobs:
         run: yarn build
       - name: Install supported npm CLI for OIDC
         run: npm install --global 'npm@^11.5.1'
-      - name: Publish with Twenty CLI and provenance
+      - name: Publish prerelease to npm beta channel
+        if: contains(github.ref_name, '-')
+        run: yarn twenty app:publish --tag beta
+      - name: Publish stable release to npm latest channel
+        if: "!contains(github.ref_name, '-')"
         run: yarn twenty app:publish
