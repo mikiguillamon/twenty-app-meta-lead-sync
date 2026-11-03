@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.0-beta.8 — 2026-11-03 (candidate; unpublished)
+
+- Replace manual PUBLISH workflow and optional npm-publication GitHub Environment with GitHub Release published trigger.
+- Validate Release tag, prerelease setting, commit ancestry, package version and build before publishing via npm OIDC.
+- The previous beta.7 GitHub Actions attempt failed before publishing; beta.7 is not reused.
+- No changes to Meta polling, tokens, mapping, deduplication or Twenty application IDs.
+
 ## 0.2.0-beta.7 — 2026-11-03 (candidate, not yet published)
 
 - Prepare first GitHub Actions release using npm Trusted Publishing and automatic provenance after the 0.2.0-beta.6 manual bootstrap.
