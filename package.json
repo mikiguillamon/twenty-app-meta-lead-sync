@@ -1,6 +1,6 @@
 {
-  "name": "twenty-app-meta-lead-sync-jff",
-  "version": "0.2.0-beta.4",
+  "name": "twenty-meta-lead-sync",
+  "version": "0.2.0-beta.5",
   "private": true,
   "description": "Sync Meta Lead Ads into Twenty CRM People with per-workspace settings, field mapping and deduplication",
   "license": "MIT",
@@ -37,10 +37,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mikiguillamon/twenty-app-meta-lead-sync.git"
+    "url": "git+https://github.com/mikiguillamon/twenty-meta-lead-sync.git"
   },
-  "homepage": "https://github.com/mikiguillamon/twenty-app-meta-lead-sync#readme",
+  "homepage": "https://github.com/mikiguillamon/twenty-meta-lead-sync#readme",
   "bugs": {
-    "url": "https://github.com/mikiguillamon/twenty-app-meta-lead-sync/issues"
+    "url": "https://github.com/mikiguillamon/twenty-meta-lead-sync/issues"
   }
 }
