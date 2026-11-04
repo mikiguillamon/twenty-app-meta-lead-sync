@@ -1,39 +1,25 @@
-# Public distribution checklist — Meta Lead Sync for Twenty
+# Distribución y compatibilidad
 
-The public npm package `twenty-meta-lead-sync@0.2.0-beta.8` was published through GitHub Actions with provenance. The JFF registration has been claimed from the NPM catalog and the maintainer has installed and verified it successfully. Stable `0.2.0` remains pending publication.
+Meta Lead Sync se instala desde el Marketplace de Twenty. El paquete público está disponible en [npm](https://www.npmjs.com/package/twenty-meta-lead-sync).
 
-For the full step-by-step release process, see [PUBLIC_RELEASE_RUNBOOK.md](PUBLIC_RELEASE_RUNBOOK.md).
+## Para los usuarios
 
-## Supported distribution
+Abre **Configuración → Aplicaciones**, desactiva **Vetted only** y busca **Meta Lead Sync**. Cada workspace configura sus propios tokens, páginas, formularios y mapeos.
 
-- **Private / same instance:** Settings > Developers > Apps > My apps > Distribution > Copy share link. This link works for other workspaces on the **same Twenty instance only**.
-- **Source / self-hosted:** Clone this repository, install with Node 24 / Yarn 4, configure a remote to their own Twenty server, then `yarn twenty app:publish --private --remote <their-server>` and `yarn twenty app:install`.
-- **Marketplace / npm:** Publish a public npm package with the `twenty-app` keyword, proper Twenty manifest metadata and GitHub provenance. Twenty imports npm packages into its catalog (normally hourly). Users find community apps after disabling **Vetted only**; marketplace inclusion does not imply vetting.
+Actualmente se ha probado con **Twenty 2.50.x**. La aplicación utiliza permisos de Meta Lead Ads para consultar envíos y crear o vincular registros de Personas en Twenty.
 
-## Release quality and compatibility checks
+Consulta [Instalación](INSTALACION.md) para configurar la aplicación.
 
-1. **Repository and package identity:** The selected npm package name is `twenty-meta-lead-sync` (unscoped); verify npm availability and ownership, and ensure `private: true` is not set. Keep the existing application and object `universalIdentifier` values unchanged for upgrade compatibility. Verify the source GitHub repository is public before using provenance and marketplace claiming. Check source and commit history for accidentally committed secrets before switching visibility.
-2. **Bilingual UI (English + Spanish):** Localized frontend strings, labels, empty/error states, status/action text; keep Meta field names, API keys, IDs, persisted states and machine codes unchanged. Twenty 2.50 settings-menu-item titles are static per manifest; choose English titles for marketplace or use a single settings component with its own localized navigation. For a per-device preference, Twenty Remote DOM supports app-scoped `localStorage`; this is not synced across devices. A per-user Twenty app variable needs additional permission configuration.
-3. **Marketplace metadata:** English description, `author`, `category`, `websiteUrl`, `issueReportUrl`, appropriate `emailSupport` and `termsUrl` if an actual support address / policy exists. Add useful screenshots with `galleryImages` pointing to bundled files; recommended 8:5 ratio (e.g. 1600x1000), under 10 MB each. Check that the README no longer describes an untested 0.1.0 beta.
-4. **Privacy and operational readiness:** New imports no longer store `field_data` answers in the deduplication ledger. Old `metaSyncSubmissions.answers` values may still contain personal data and require a separate, authorized cleanup with backup and verified scope; do not destroy the ledger (deduplication depends on it). Review retention and uninstall behavior before release.  Verify data retention / deletion for stored Meta lead answers and audit records, permissions, secure secret storage, timeout/rate-limit behavior, uninstall semantics, GDPR user rights, and documentation. Separately validate multi-workspace isolation with distinct Meta credentials before claiming a complete security review.
-5. **CI and signing:** The current release workflow triggers on `GitHub Release published` and uses GitHub Actions with OIDC/provenance. No npm token is stored in GitHub. Require clean build, preflight and an integration test before declaring stable. Ensure `yarn install --immutable`, typecheck, tests, build and a real Twenty integration test pass before pushing a release tag.
-6. **Ownership / claiming:** After the package appears in the marketplace catalog, claim it via Settings > Developers > Apps > Claim an application > Claim with GitHub. Claiming requires valid provenance from a public GitHub repository. If the app uses no server routes it does not need an owner-workspace shared webhook resolver. Claiming is per Twenty instance.
+## Para desarrolladores
 
-## Publish / install command differences
+El código fuente está disponible en [GitHub](https://github.com/mikiguillamon/twenty-meta-lead-sync) bajo licencia MIT. La publicación utiliza GitHub Releases y npm Trusted Publishing, con el CLI de Twenty.
 
-```bash
-# Source installation into an isolated development instance only
-corepack yarn twenty app:publish --private --remote testing
+Los identificadores universales de la aplicación deben conservarse entre versiones para mantener la compatibilidad con las instalaciones existentes. Las nuevas versiones deben superar los tests y la compilación. Antes de ampliar el rango `engines.twenty`, hay que probar la aplicación en cada versión compatible.
 
-# PUBLIC distribution — run from GitHub Actions, not a developer workstation
-# GitHub Release triggers publish.yml, which calls twenty app:publish
-# It selects --tag beta for a prerelease, and latest for stable
-```
+Para el procedimiento de publicación consulta la [guía de versiones](PUBLIC_RELEASE_RUNBOOK.md).
 
-Do NOT substitute `npm publish` for the Twenty CLI publishing workflow: the CLI packages Twenty-specific manifest and application artifacts.
+## Privacidad
 
-## References
+Las credenciales se almacenan como variables secretas del workspace. La aplicación mantiene en Twenty los datos importados y el estado de las sincronizaciones. Los administradores deben definir los permisos de acceso y las reglas de conservación y supresión de datos de su organización.
 
-- https://docs.twenty.com/developers/extend/apps/operations/publishing
-- https://docs.twenty.com/developers/extend/apps/config/application
-- https://docs.twenty.com/developers/extend/apps/layout/front-components
+Meta Lead Sync no modifica las suscripciones a webhooks de Meta.
