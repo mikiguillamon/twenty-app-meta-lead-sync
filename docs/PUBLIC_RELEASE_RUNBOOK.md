@@ -16,7 +16,7 @@ corepack yarn check
 node scripts/release-preflight.mjs --public --tag vVERSION
 ```
 
-Sustituye `vVERSION` por la etiqueta de la próxima versión, por ejemplo `v0.2.1`.
+Sustituye `vVERSION` por la etiqueta de la próxima versión, por ejemplo `v0.2.2`.
 
 ## Crear la release
 
