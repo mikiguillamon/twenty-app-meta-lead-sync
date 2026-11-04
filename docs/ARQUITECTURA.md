@@ -1,4 +1,4 @@
-# Arquitectura implantada: Meta Lead Sync para Twenty 2.50.0
+# Arquitectura de Meta Lead Sync
 
 ## Principios
 
@@ -16,7 +16,7 @@ La misma app de Twenty puede registrarse en el servidor y **instalarse en cada w
 | Historial (máximo 50/formulario) | `kv` → `meta-lead-sync:history:v1:<formId>` | Workspace |
 | Identificadores de leads y resultados | objeto `metaSyncSubmission`, índice único `leadgenId` | Workspace |
 
-**Importante:** el ledger contiene respuestas originales potencialmente personales. Se declara `MetadataReadability.APPLICATION` y `MetadataWritability.APPLICATION` para que solo el rol de la aplicación lo pueda leer/escribir; **no se presenta en la navegación de usuario**. El historial accesible en el panel muestra únicamente contadores/errores saneados.
+**Importante:** las versiones actuales no guardan las respuestas completas de Meta en el ledger, aunque las instalaciones antiguas pueden conservar datos históricos. Se declara `MetadataReadability.APPLICATION` y `MetadataWritability.APPLICATION` para que solo el rol de la aplicación lo pueda leer/escribir; **no se presenta en la navegación de usuario**. El historial accesible en el panel muestra únicamente contadores/errores saneados.
 
 ## Componentes
 
@@ -40,14 +40,14 @@ La misma app de Twenty puede registrarse en el servidor y **instalarse en cada w
 6. Guarda el resultado por lead en un checkpoint KV de esa página para no contarlo dos veces si se reintenta. Al terminar la página consolida contadores y encola la siguiente con ID estable.
 7. Solo al terminar **todas** las páginas se mueve `lastSuccessAt`. Errores de Graph API transitorios (`429`/`5xx`) piden reintentos con `RetryableLogicFunctionError`. Un fallo final registra evento `FAILED` sin avanzar la marca de éxito.
 
-## Límites explícitos de esta beta
+## Límites y consideraciones operativas
 
 - Máximo de **400 páginas × 25 leads** por ejecución, para impedir bucles/ejecuciones descontroladas. Al superar este límite se registra fallo sin avanzar cursor; después se debe dividir la recuperación.
 - La marca persistente entre ejecuciones es temporal (`lastSuccessAt`), no el cursor opaco de Graph. Se vuelve a consultar el rango tras un fallo y el ledger evita duplicar envíos procesados.
-- La deduplicación estricta es por `leadgenId` en el ledger. Una caída después de **crear la Persona pero antes de enlazar el ID** requiere recuperar por email/teléfono; no se ofrece una garantía transaccional absoluta sobre la creación de Persona. **No publicar en marketplace** sin reforzar esta reconciliación e introducir pruebas de caos.
-- Requiere comprobar en el workspace real la representación de `EMAILS`, `PHONES`, campos personalizados y la disponibilidad de permisos. Las pruebas simuladas no reemplazan esa comprobación.
-- No hay auto-borrado de respuestas ni consola de supresión RGPD. Requiere política de privacidad, retención, eliminación y un proceso de soporte antes de producción multicliente.
-- La interfaz usa front components, que en Twenty 2.50 aún están en evolución: probar funcionamiento real después de la instalación.
+- La deduplicación se basa en `leadgenId` en el ledger. Si se interrumpe el proceso tras crear una Persona y antes de guardar su vínculo, la aplicación intenta recuperarla por email o teléfono. No existe garantía transaccional absoluta sobre la creación de Personas.
+- Los formatos de `EMAILS`, `PHONES` y de los campos personalizados dependen de la versión de Twenty; compruébalos al añadir compatibilidad con nuevas versiones.
+- No incluye un sistema automático de supresión de datos personales. Cada administrador debe aplicar su política de retención y eliminación.
+- La interfaz utiliza front components de Twenty. Verifica su funcionamiento al actualizar Twenty.
 
 ## Seguridad
 
