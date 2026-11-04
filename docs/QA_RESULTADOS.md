@@ -1,25 +1,29 @@
-# Informe de verificación de la entrega — 26/10/2026
+# Verificación y pruebas
 
-## Hecho y comprobado en el entorno de creación
+El proyecto incluye tests automáticos para el mapeo de datos, la deduplicación, la paginación y la gestión de errores de sincronización. GitHub Actions ejecuta la comprobación de tipos, los tests y la compilación en las propuestas de cambio.
 
-- [x] Implementación de código real `.ts`/`.tsx`: manifest, permisos, índice, objeto ledger, front components, lógica y cron.
-- [x] Versiones fijadas en `package.json`: `twenty-sdk` y `twenty-client-sdk` **2.50.0**; compatibles según el código fuente oficial de Twenty `twenty/v2.50.0`.
-- [x] Pruebas locales ejecutadas con Node 22 mediante `--experimental-strip-types` y **stubs SDK de test**: **17 pasadas / 0 fallidas**.
-- [x] Test integrado, en memoria: System User Token → Page Token → petición Meta simulada → mapeo → creación Persona → ledger → cursor/estado → repetición sin duplicar.
-- [x] Test integrado, en memoria: Meta `429`, reintento, historial de fallo y cursor sin avance.
-- [x] Test integrado, en memoria: 2 páginas, job idempotente, contadores correctos al repetir página anterior.
-- [x] `TypeScript.transpileModule` analizó **34 archivos `.ts`/`.tsx` sin errores de sintaxis**.
-- [x] Mock de integración comprueba que la URL de Graph API nunca recibe el token en parámetros.
+La aplicación se ha instalado y probado desde el Marketplace en **Twenty 2.50.x**. Esta verificación confirma el funcionamiento básico de la instalación publicada; no representa una auditoría completa de seguridad, privacidad, carga o compatibilidad con otras versiones.
 
-## No comprobado todavía (necesita acceso/red/servidor)
+## Cómo ejecutar las pruebas
 
-- [ ] `yarn install` con el registro real de paquetes. El contenedor de creación no tiene acceso de red a npm.
-- [ ] `yarn typecheck` con las **declaraciones reales** de los paquetes 2.50.0, no con stubs.
-- [ ] `yarn build` / `twenty dev:build` con el SDK instalado y el manifest validado.
-- [ ] Publicación de app privada, instalación y render de front components en **Twenty 2.50.0**.
-- [ ] Prueba en Meta Graph API con System User Token y Page Access Token auténticos, permisos y leads reales.
-- [ ] Alta/actualización de Person y `metaSyncSubmission` con el API REST de tu workspace y campos personalizados.
-- [ ] Ejecuciones programadas y convivencia entre múltiples workspaces/volúmenes.
-- [ ] Seguridad/privacidad/comportamiento bajo caída de red y rate limits reales, incluida supresión RGPD.
+Con Node.js 24 y Yarn 4:
 
-**Resultado:** beta fuente completa con pruebas automatizadas locales, **NO afirmada como compilada ni desplegada/validada en Twenty real**. GitHub Actions (`.github/workflows/check.yml`) realizará `typecheck`, `test` y `build` en un runner con acceso a dependencias. Antes de instalar revisa los resultados de Actions. No publicar en el Marketplace hasta completar [QA.md](QA.md).
+```bash
+corepack yarn install --immutable
+corepack yarn typecheck
+corepack yarn test
+corepack yarn build
+```
+
+Para evaluar una nueva versión de Twenty o un cambio en los permisos de Meta, sigue el [checklist de pruebas](QA.md) en un entorno con datos de prueba.
+
+## Áreas que requieren pruebas de integración
+
+- Distintos tipos de token y permisos de páginas de Meta.
+- Formularios y campos personalizados con diferentes tipos de datos.
+- Importaciones históricas, paginación, reintentos y límites de API.
+- Deduplicación tras errores parciales y recuperación de Personas.
+- Aislamiento entre workspaces y derechos de acceso.
+- Retención y supresión de los datos personales importados.
+
+Puedes consultar los detalles de los cambios publicados en el [changelog](../CHANGELOG.md).
