@@ -1,8 +1,8 @@
 {
   "name": "twenty-meta-lead-sync",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": false,
-  "description": "Sync Meta Lead Ads into Twenty CRM People with per-workspace settings, field mapping and deduplication",
+  "description": "Import Facebook and Instagram Lead Ads into Twenty CRM with form mapping, automatic syncing and deduplication",
   "license": "MIT",
   "type": "module",
   "packageManager": "yarn@4.13.0",
