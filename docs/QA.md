@@ -1,10 +1,10 @@
 # Checklist de aceptación en el servidor Twenty real
 
-> 17 pruebas simuladas locales pasadas (ver [QA_RESULTADOS.md](QA_RESULTADOS.md)), pero los puntos siguientes se deben probar en un workspace real antes del uso general.
+> Utiliza esta lista al probar nuevas versiones o configuraciones. Las pruebas automatizadas no sustituyen las comprobaciones contra Meta y Twenty reales.
 
 
-- [ ] Se compila `yarn build` con Twenty SDK 2.50.0 y el proyecto pasa `yarn typecheck` y `yarn test`.
-- [ ] Una instalación privada no toca la app AppUnite existente ni modifica webhook de Meta.
+- [ ] La compilación y las pruebas pasan con el SDK de la versión de Twenty que se quiere admitir.
+- [ ] La instalación no cambia los webhooks existentes de Meta.
 - [ ] El formulario y sus preguntas aparecen para una página con System User Token.
 - [ ] La autenticación de otra página con Page Access Token también funciona.
 - [ ] Dos páginas distintas del mismo workspace funcionan simultáneamente.
@@ -19,9 +19,9 @@
 - [ ] Un lead sin email/teléfono queda en `NEEDS_REVIEW`.
 - [ ] No expone secretos en respuestas HTTP, tablas, KV ni logs.
 - [ ] Los miembros sin permiso de APPS no pueden llamar a los endpoints protegidos.
-- [ ] Los workspaces instalados no ven la configuración ni los datos de los otros.
+- [ ] Las instalaciones de distintos workspaces mantienen aislados los tokens, las configuraciones y los datos.
 - [ ] Probado con 10+ workspaces y cumplimiento de límites de API.
 - [ ] Revisión RGPD: supresión, plazo de retención, finalidades, consentimientos y permisos.
 - [ ] La instalación/desinstalación/upgrade no deja tablas o indices huérfanos.
 
-Un ítem sin marcar impide afirmar que la aplicación está lista para marketplace público.
+Los puntos pendientes indican qué escenarios todavía requieren verificación específica; no implican que la aplicación deje de estar disponible en el Marketplace.

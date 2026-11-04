@@ -1,113 +1,67 @@
-# Instalación paso a paso: beta privada en Twenty 2.50
+# Guía de instalación y configuración
 
-**Objetivo:** probar exclusivamente en el workspace Just For Fun `https://jff.leads.justforfun.es`. No modificar el webhook de Meta ni la aplicación de Frappe.
+Meta Lead Sync importa los contactos de Facebook e Instagram Lead Ads a Personas de Twenty. Puedes utilizar varias páginas de Meta y varios formularios en cada workspace.
 
-## 0. Antes de empezar
+La aplicación se ha probado con **Twenty 2.50.x**. Necesitas permisos para instalar aplicaciones en el workspace y acceso a los formularios de Meta que quieras sincronizar.
 
-- Comprueba en Twenty que el workspace y el servidor están operativos y que tienes un usuario administrador.
-- Crea una copia de seguridad del PostgreSQL de Twenty en Coolify. No es necesario restaurar ni editar el `docker-compose`.
-- Conserva AppUnite instalada por ahora para comparar; la nueva app tiene **otro identificador universal** y un ledger técnico no navegable llamado `Meta Sync Submission`.
-- No pegues tu System User Token en GitHub ni en capturas/logs.
-- Usa **un formulario de pruebas o una página con muy pocos leads** para el primer ensayo: importar puede crear Personas reales en tu workspace.
+## Instalar desde el Marketplace
 
-## 1. Crear repositorio en GitHub
+1. Abre **Configuración → Aplicaciones** en Twenty.
+2. Desactiva el filtro **Vetted only** para mostrar también las aplicaciones de la comunidad.
+3. Busca **Meta Lead Sync** y pulsa **Instalar**.
+4. Abre los ajustes de la aplicación.
 
-1. Descarga el ZIP proporcionado y **descomprímelo** en tu Mac.
-2. En GitHub, usa el repositorio público existente `twenty-meta-lead-sync`.
-3. Abre Terminal en la carpeta descomprimida y ejecuta (cambia la URL del repositorio si utilizas otro nombre):
+Si no aparece, pide al administrador de tu instancia que sincronice el catálogo del Marketplace. Las versiones posteriores a Twenty 2.50.x no se han verificado todavía.
 
-```bash
-git init
-git branch -M main
-git add .
-git commit -m "Initial native Meta Lead Sync Twenty app"
-git remote add origin git@github.com:mikiguillamon/twenty-meta-lead-sync.git
-git push -u origin main
-```
+## Conectar Meta
 
-No subas el ZIP dentro del mismo repositorio ni uses `git add` en una carpeta con tokens. Las credenciales nunca van en archivos de proyecto.
+En **Conexiones** puedes introducir un token de usuario del sistema de Meta (System User Token) o tokens de acceso específicos de cada página (Page Access Tokens).
 
-## 2. Preparar el entorno local
+El token debe tener acceso a las páginas y a los formularios de Lead Ads que vayas a utilizar. Los permisos dependen de cómo tengas configurada la cuenta empresarial y la aplicación de Meta. Si la validación falla, revisa primero los permisos y el acceso a la página.
 
-Node.js **24.5 o superior** y **Yarn 4**. En Mac con `nvm`:
+Guarda las credenciales desde la interfaz. Twenty las almacena como variables secretas del workspace; evita compartirlas en incidencias o capturas.
 
-```bash
-nvm install 24
-nvm use 24
-node -v
-corepack enable
-corepack yarn --version
-```
+## Elegir páginas y formularios
 
-Si no tienes `corepack`, instálalo siguiendo las instrucciones actuales de Node y Yarn para tu sistema.
+1. Utiliza **Descubrir páginas** para consultar las páginas disponibles con tus credenciales.
+2. En **Páginas**, activa las que quieras sincronizar y guarda la selección.
+3. Actualiza los formularios de cada página.
+4. En **Formularios**, activa los formularios que vayas a importar.
 
-Instalar dependencias y hacer controles (estos pasos **aún no han pasado en el entorno de creación**, por falta de red a npm):
+Puedes conectar varias páginas y elegir sus formularios por separado. La configuración no se comparte con otros workspaces.
 
-```bash
-yarn install
-yarn typecheck
-yarn test
-yarn build
-```
+## Configurar el mapeo
 
-**Comprueba además que GitHub Actions se complete en verde antes de instalar en Twenty.** Cuando `yarn install` termine, añade `yarn.lock` al siguiente commit para que las instalaciones sean reproducibles. Si `yarn` informa de que falta alguna versión del SDK, comprueba primero el registro de npm; **no cambies versiones a ciegas** y comparte el error. Los dos SDK (`twenty-sdk` y `twenty-client-sdk`) están fijados a `2.50.0`.
+En **Mapeo**, selecciona un formulario y relaciona cada pregunta de Meta con el campo adecuado de Personas en Twenty.
 
-## 3. Conectar el CLI con el workspace
+Por ejemplo, puedes asociar el email y el teléfono a los campos estándar. Para las preguntas propias de un formulario, puedes utilizar campos personalizados compatibles, siempre que estén creados en Twenty.
 
-```bash
-yarn twenty remote:add --url https://jff.leads.justforfun.es --as jff
-```
+Revisa el tipo de cada campo antes de guardar. Los campos de selección deben utilizar opciones que existan en el CRM.
 
-Sigue el método de autenticación que muestre el CLI. Si solicita una API key, créala en el **workspace Just For Fun → Ajustes → Desarrolladores → API** y guárdala solo en la configuración local privada de Twenty CLI. Nunca la añadas al repositorio.
+## Probar una importación
 
-**Consejo:** si el CLI da un error de origen o redirección por tu configuración multi-workspace, prueba con el dominio principal `https://leads.justforfun.es` siguiendo exactamente el mensaje del CLI, sin modificar las variables de Coolify. La autenticación debe seguir correspondiendo al workspace `jff`.
+Abre **Sincronización**, elige uno de los formularios y ejecuta una importación manual. Comprueba el historial y revisa las Personas que se hayan creado o vinculado.
 
-## 4. Compilar y publicar solo en tu servidor
+Si vuelves a importar el mismo lead, la aplicación utiliza su identificador de Meta para evitar duplicados. Si falta información esencial o se produce un error, revisa el estado de la sincronización antes de reintentarlo.
 
-```bash
-yarn build
-yarn twenty app:publish --private --remote jff
-```
+Cuando la prueba sea satisfactoria, activa la sincronización automática. Puedes elegir un intervalo de **1 a 60 minutos**; el valor habitual es **5 minutos**.
 
-El primer comando genera `.twenty/output/` (no se sube a GitHub). El segundo publica una aplicación **privada** en el registro de tu servidor Twenty, no en npm. Si el CLI solicita confirmar la instalación en el workspace, comprueba que el destino sea **Just For Fun**.
+La importación de histórico puede consultar hasta **90 días**, según los datos disponibles y los límites de Meta. Utilízala de forma deliberada, especialmente en formularios con muchos envíos.
 
-En Twenty entra en **Ajustes → Desarrolladores → Apps → My apps** (la traducción puede variar). Localiza `Meta Lead Sync`, instálala si todavía no figura en las aplicaciones del workspace y confirma los permisos. Luego abre **Ajustes → Aplicaciones → Meta Lead Sync**.
+## Problemas habituales
 
-Si el comando devuelve un error de compilación o instalación, **detente ahí** y pasa la salida (sin tokens) para corregirlo. No hagas reinicios de Coolify ni edites PostgreSQL por tu cuenta.
+**No aparecen páginas o formularios.** Comprueba que el token tenga acceso a la página y permisos de Lead Ads. Algunos endpoints de Meta requieren un Page Access Token.
 
-## 5. Configurar la app en el workspace
+**No se crea una Persona.** Comprueba el mapeo, los campos obligatorios y el historial de sincronización. Los registros sin datos suficientes pueden quedar pendientes de revisión.
 
-1. **Conexiones:** introduce tu System User Token de Meta y pulsa **Validar y guardar**. Debe aparecer `Configurado`.
-2. Pulsa **Descubrir mis páginas**. Esto usa `/me/accounts` y consigue tokens de página en cada petición, sin que tengas que renovarlos manualmente.
-3. **Páginas:** activa la(s) página(s) deseada(s) y pulsa **Guardar páginas activas**.
-4. En cada página pulsa **Buscar formularios de esta página**.
-5. **Formularios:** activa los formularios deseados y guarda.
-6. **Mapeo:** elige un formulario; asigna `full_name` → Nombre completo, `email` → Email, `phone_number` → Teléfono y cada pregunta personalizada al campo personalizado correspondiente. Guarda.
-7. **Sincronización:** elige 5 minutos, guarda y pulsa **Sincronizar ahora**. Consulta el panel de Historial; el ledger no se muestra en la navegación de usuarios.
-8. Para un histórico más amplio, pulsa **Importar histórico** (hasta 90 días, sujeto a las restricciones de Meta).
+**Meta limita las peticiones.** La aplicación aplica pausas y reintentos para respetar los límites de su API. Revisa el estado mostrado en Sincronización antes de forzar una nueva consulta.
 
-**Importante:** no pulses `Connect` en AppUnite; esta app no toca la URL ni suscripciones de Meta.
+**Se han importado datos incorrectos.** Detén la sincronización del formulario, revisa el mapeo y corrige los registros afectados en Twenty antes de volver a importar.
 
-## 6. Comprobación mínima
+Para informar de un error, abre una [incidencia en GitHub](https://github.com/mikiguillamon/twenty-meta-lead-sync/issues) sin incluir tokens ni datos personales.
 
-- El formulario aparece con un nombre real, preguntas y un Form ID numérico.
-- Al pulsar `Sincronizar ahora` aparece un evento de inicio y después de finalización.
-- Si el formulario tiene leads, el historial muestra un envío `PROCESSED` o `NEEDS_REVIEW` y los administradores técnicos pueden comprobar el ledger interno por API/BD con autorización adecuada. No aparece como tabla navegable por los usuarios.
-- Si hay email o teléfono, la Persona queda creada o vinculada.
-- Pulsa otra vez `Sincronizar ahora`: no deben aparecer Personas duplicadas por ese mismo lead.
-- Verifica que otro workspace no pueda acceder a los formularios ni credenciales del workspace JFF.
+## Privacidad
 
-Si falla, empieza por **Historial** y comparte el mensaje textual, sin tokens y sin respuestas personales.
+Los contactos importados contienen datos personales. Antes de utilizar la aplicación, comprueba los permisos de acceso del workspace, la base legal para tratar esos datos y tus procedimientos de conservación y eliminación.
 
-## 7. Actualizar una beta
-
-1. Cambia el código y aumenta **`version`** de `package.json`, p. ej. `0.1.0` → `0.1.1`.
-2. `yarn typecheck && yarn test && yarn build`.
-3. `yarn twenty app:publish --private --remote jff`.
-4. Comprueba la actualización en Twenty y repite la prueba con un formulario controlado.
-
-El servidor de Twenty no permite reemplazar un tarball manteniendo el mismo número de versión.
-
-## 8. Publicar en marketplace (DESPUÉS de validar)
-
-Ver [MARKETPLACE.md](MARKETPLACE.md). No lo publiques en npm ni lo preinstales a clientes hasta superar las pruebas reales, especialmente manejo de errores de Meta, autorización, seguridad y privacidad.
+La aplicación consulta Meta periódicamente. No modifica las suscripciones a webhooks que puedas tener configuradas en otras herramientas.
