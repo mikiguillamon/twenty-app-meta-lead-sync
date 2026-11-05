@@ -2,7 +2,7 @@
 
 Bring Facebook and Instagram Lead Ads into Twenty CRM. Connect your Meta Pages, choose which forms to import, and map responses to People fields. The app runs inside Twenty, so you don't need a separate automation platform.
 
-Each workspace has its own Meta connection, form settings and sync schedule.
+Each workspace has its own Meta connection, forms and mappings. The sync interval is configured per workspace, and forms can be enabled separately.
 
 **Compatibility:** Twenty 2.50.x  
 **Languages:** English and Spanish  
@@ -14,7 +14,7 @@ Each workspace has its own Meta connection, form settings and sync schedule.
 - Manage several Pages and forms in the same workspace.
 - Map form answers to standard and supported custom fields on People.
 - Import new leads automatically, with an interval from 1 to 60 minutes.
-- Run a manual sync or import up to 90 days of historical leads.
+- Run a manual sync or request an explicit historical import covering up to 90 days. The first ordinary sync checks the previous 24 hours.
 - Avoid importing the same Meta lead twice, and review sync activity and errors.
 - Use the interface in English or Spanish. By default, it follows your Twenty language.
 
@@ -33,7 +33,7 @@ You'll need access to the relevant Meta Pages and Lead Ads forms, including the 
 
 If the app isn't listed, ask your Twenty administrator to synchronize the Marketplace catalog. Community apps are not necessarily vetted by Twenty.
 
-For a fuller walkthrough, see the [installation guide (Español)](docs/INSTALACION.md).
+For a fuller walkthrough, see the [installation guide (Español)](https://github.com/mikiguillamon/twenty-meta-lead-sync/blob/main/docs/INSTALACION.md).
 
 ## Privacy and security
 
@@ -53,14 +53,9 @@ Tienes todos los pasos en la [guía de instalación](docs/INSTALACION.md).
 
 ## Development and support
 
-The source is available under the MIT license. To run the checks locally, use Node.js 24 and Yarn 4:
+Source code is available under the MIT license. Developers can find setup and contribution instructions in [CONTRIBUTING.md](https://github.com/mikiguillamon/twenty-meta-lead-sync/blob/main/CONTRIBUTING.md).
 
-```bash
-corepack yarn install --immutable
-corepack yarn check
-```
-
-See the [architecture notes](docs/ARQUITECTURA.md), [testing guide](docs/QA.md), [Marketplace guide](docs/MARKETPLACE.md) and [changelog](CHANGELOG.md).
+See the [architecture notes](https://github.com/mikiguillamon/twenty-meta-lead-sync/blob/main/docs/ARQUITECTURA.md), [testing guide](https://github.com/mikiguillamon/twenty-meta-lead-sync/blob/main/docs/QA.md), [Marketplace guide](https://github.com/mikiguillamon/twenty-meta-lead-sync/blob/main/docs/MARKETPLACE.md) and [changelog](https://github.com/mikiguillamon/twenty-meta-lead-sync/blob/main/CHANGELOG.md).
 
 For bugs and feature requests, open an [issue on GitHub](https://github.com/mikiguillamon/twenty-meta-lead-sync/issues).
 
