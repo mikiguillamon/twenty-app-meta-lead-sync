@@ -44,9 +44,9 @@ Abre **Sincronización**, elige uno de los formularios y ejecuta una importació
 
 Si vuelves a importar el mismo lead, la aplicación utiliza su identificador de Meta para evitar duplicados. Si falta información esencial o se produce un error, revisa el estado de la sincronización antes de reintentarlo.
 
-Cuando la prueba sea satisfactoria, activa la sincronización automática. Puedes elegir un intervalo de **1 a 60 minutos**; el valor habitual es **5 minutos**.
+Cuando la prueba sea satisfactoria, activa la sincronización automática. Puedes elegir un intervalo común al workspace de **1, 2, 5, 10, 15, 30 o 60 minutos**; el valor inicial es **5 minutos**. Cada formulario puede activarse de forma independiente.
 
-La importación de histórico puede consultar hasta **90 días**, según los datos disponibles y los límites de Meta. Utilízala de forma deliberada, especialmente en formularios con muchos envíos.
+La primera importación ordinaria consulta las **últimas 24 horas**. Para recuperar envíos anteriores debes solicitar una importación histórica, que puede consultar hasta **90 días**, según los datos disponibles y los límites de Meta. Utilízala de forma deliberada, especialmente en formularios con muchos envíos.
 
 ## Problemas habituales
 
