@@ -1,6 +1,6 @@
 # Publicar versiones de Meta Lead Sync
 
-Las versiones se publican desde GitHub Releases. El workflow [`publish.yml`](../.github/workflows/publish.yml) prepara los archivos de Twenty y utiliza npm Trusted Publishing para firmar su procedencia.
+Las versiones se publican desde GitHub Releases. Para mover etiquetas npm de versiones ya publicadas existe un disparador manual en el mismo workflow, autorizado con OIDC y **Allow npm dist-tag**. El workflow [`publish.yml`](../.github/workflows/publish.yml) prepara los archivos de Twenty y utiliza npm Trusted Publishing para firmar su procedencia.
 
 ## Preparar el cambio
 
@@ -25,7 +25,7 @@ Publica una GitHub Release a partir de un commit de `main` que haya pasado las p
 - Para una versión estable, publica la release normalmente.
 - Para una versión preliminar, marca **Set as a pre-release** y utiliza un número de versión con sufijo (por ejemplo, `-beta.1`).
 
-El workflow valida la etiqueta y la relación con `main`. Ejecuta comprobaciones de TypeScript, tests y compilación, y después publica el paquete con la herramienta de Twenty. Las versiones estables van al canal npm `latest` y las preliminares a `beta`.
+El workflow valida la etiqueta y la relación con `main`. Ejecuta comprobaciones de TypeScript, tests y compilación, y después publica el paquete con la herramienta de Twenty. Las versiones estables van al canal npm `latest` y las preliminares a `beta`. El job instala npm CLI 11.21 o posterior dentro de la rama 11 para permitir cambios de dist-tags mediante OIDC.
 
 ## Comprobar la publicación
 
@@ -36,6 +36,8 @@ npm view twenty-meta-lead-sync versions --json
 ```
 
 Comprueba también que el paquete muestra la versión correcta y su procedencia en npm. Los cambios pueden tardar en reflejarse en los registros y en el catálogo de Twenty.
+
+Para corregir únicamente el puntero de un canal, abre **Actions > Publish Twenty app to npm > Run workflow**, selecciona `latest` o `beta` e introduce una versión existente, sin `v`. El job comprueba que la versión existe y exige una versión estable para `latest` y una versión preliminar para `beta`. También puedes ejecutarlo mediante `gh workflow run publish.yml -f dist_tag=latest -f version=VERSION` y comprobarlo con `gh run list --workflow publish.yml --limit 5`. Esto no publica un artefacto nuevo.
 
 No vuelvas a publicar una versión ya existente para corregir los metadatos. Prepara un número de versión nuevo si cambias los archivos incluidos en el paquete.
 
