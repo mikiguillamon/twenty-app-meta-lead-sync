@@ -2,7 +2,7 @@
 
 Meta Lead Sync se distribuye como aplicación comunitaria para Twenty a través del paquete npm público [`twenty-meta-lead-sync`](https://www.npmjs.com/package/twenty-meta-lead-sync).
 
-El Marketplace de Twenty consulta el catálogo de npm. Si una instalación no muestra Meta Lead Sync, su administrador puede sincronizar el catálogo y desactivar el filtro **Vetted only**. La inclusión como aplicación comunitaria no implica una revisión o certificación por parte de Twenty.
+El Marketplace de Twenty consulta el catálogo de npm. La descripción pública extendida puede provenir del README incluido en la versión del paquete publicada, por lo que editar GitHub sin publicar una nueva versión no actualiza esa ficha. Utiliza enlaces absolutos en el README. Si una instalación no muestra Meta Lead Sync, su administrador puede sincronizar el catálogo y desactivar el filtro **Vetted only**. La inclusión como aplicación comunitaria no implica una revisión o certificación por parte de Twenty.
 
 ## Compatibilidad
 
@@ -18,7 +18,7 @@ Consulta la [guía de instalación](INSTALACION.md) para conectar Meta y configu
 
 El repositorio utiliza GitHub Actions y npm Trusted Publishing. Al publicar una GitHub Release, el workflow comprueba el número de versión, ejecuta los tests y compila el paquete con el CLI de Twenty.
 
-Las versiones estables utilizan el canal npm `latest`; las versiones preliminares se publican en `beta`. Una versión ya publicada en npm no puede sustituirse por otro paquete con el mismo número.
+Las versiones estables utilizan el canal npm `latest`; las versiones preliminares se publican en `beta`. El workflow `publish.yml` también admite una ejecución manual `workflow_dispatch` para mover una etiqueta a una versión ya publicada, mediante npm OIDC y el permiso **Allow npm dist-tag**. No necesita un token npm permanente. Una versión ya publicada en npm no puede sustituirse por otro paquete con el mismo número.
 
 Para preparar una nueva versión:
 
