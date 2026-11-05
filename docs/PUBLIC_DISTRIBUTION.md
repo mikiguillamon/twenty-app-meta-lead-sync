@@ -16,7 +16,7 @@ El código fuente está disponible en [GitHub](https://github.com/mikiguillamon/
 
 Los identificadores universales de la aplicación deben conservarse entre versiones para mantener la compatibilidad con las instalaciones existentes. Las nuevas versiones deben superar los tests y la compilación. Antes de ampliar el rango `engines.twenty`, hay que probar la aplicación en cada versión compatible.
 
-Para el procedimiento de publicación consulta la [guía de versiones](PUBLIC_RELEASE_RUNBOOK.md).
+Para el procedimiento de publicación y gestión de `latest` y `beta` por OIDC consulta la [guía de versiones](PUBLIC_RELEASE_RUNBOOK.md).
 
 ## Privacidad
 
