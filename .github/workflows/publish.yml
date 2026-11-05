@@ -3,6 +3,19 @@ name: Publish Twenty app to npm
 on:
   release:
     types: [published]
+  workflow_dispatch:
+    inputs:
+      dist_tag:
+        description: npm dist-tag to update
+        type: choice
+        options:
+          - latest
+          - beta
+        required: true
+      version:
+        description: Existing, already published npm version (without v)
+        type: string
+        required: true
 
 permissions:
   contents: read
@@ -14,6 +27,7 @@ concurrency:
 
 jobs:
   publish:
+    if: github.event_name == 'release'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -58,10 +72,56 @@ jobs:
       - name: Build Twenty application
         run: yarn build
       - name: Install npm CLI supporting OIDC
-        run: npm install --global 'npm@^11.5.1'
+        run: npm install --global 'npm@^11.21.0'
       - name: Publish prerelease to npm beta channel
         if: github.event.release.prerelease == true
         run: yarn twenty app:publish --tag beta
       - name: Publish stable to npm latest channel
         if: github.event.release.prerelease == false
         run: yarn twenty app:publish
+
+  manage-dist-tag:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Set up Node and npm registry
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.5.0'
+          registry-url: 'https://registry.npmjs.org'
+      - name: Install npm CLI with OIDC dist-tag support
+        run: npm install --global 'npm@^11.21.0'
+      - name: Validate existing version and requested channel
+        shell: bash
+        env:
+          PACKAGE: twenty-meta-lead-sync
+          VERSION: ${{ inputs.version }}
+          DIST_TAG: ${{ inputs.dist_tag }}
+        run: |
+          set -euo pipefail
+          [[ "$VERSION" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?$ ]] || { echo "Invalid semver"; exit 1; }
+          case "$DIST_TAG" in
+            latest) [[ "$VERSION" != *-* ]] || { echo "latest requires a stable version"; exit 1; } ;;
+            beta) [[ "$VERSION" == *-* ]] || { echo "beta requires a prerelease"; exit 1; } ;;
+            *) echo "Unsupported channel"; exit 1 ;;
+          esac
+          FOUND="$(npm view "$PACKAGE@$VERSION" version --json)"
+          [[ "$FOUND" == "\"$VERSION\"" ]] || { echo "The exact version is not published in npm"; exit 1; }
+          echo "Current tags:"
+          npm dist-tag ls "$PACKAGE"
+      - name: Move npm dist-tag with GitHub OIDC
+        shell: bash
+        env:
+          PACKAGE: twenty-meta-lead-sync
+          VERSION: ${{ inputs.version }}
+          DIST_TAG: ${{ inputs.dist_tag }}
+        run: |
+          set -euo pipefail
+          npm dist-tag add "$PACKAGE@$VERSION" "$DIST_TAG"
+          echo "Updated tags:"
+          npm dist-tag ls "$PACKAGE"
+          echo "### npm dist-tag updated" >> "$GITHUB_STEP_SUMMARY"
+          echo "Package: `$PACKAGE`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Channel: `$DIST_TAG`" >> "$GITHUB_STEP_SUMMARY"
+          echo "Version: `$VERSION`" >> "$GITHUB_STEP_SUMMARY"
