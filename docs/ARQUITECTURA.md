@@ -33,7 +33,7 @@ La misma app de Twenty puede registrarse en el servidor y **instalarse en cada w
 ## Ciclo de una sincronización
 
 1. El CRON comprueba cada minuto qué formularios habilitados han alcanzado su intervalo configurable, por defecto **5 minutos**.
-2. Encola una sesión por formulario con un rango de consulta: hasta 90 días desde el primer inicio, o desde el último éxito con **5 minutos de solapamiento**. La sesión es exclusiva del workspace.
+2. Encola una sesión por formulario con un rango de consulta: las últimas **24 horas en la primera ejecución ordinaria**, hasta **90 días en una importación histórica explícita**, o desde el último éxito con **5 minutos de solapamiento**. La sesión es exclusiva del workspace.
 3. El job resuelve el Page Token directo o temporalmente mediante System User Token y `/me/accounts`; **no guarda el token temporal**.
 4. Obtiene hasta 25 leads de `/<formId>/leads` con filtro de tiempo y cursor `after`.
 5. Antes de crear cualquier Persona, reclama un registro ledger con `leadgenId` único. Valida los mapeos, localiza Persona por email/teléfono y crea o vincula (actualización opcional).
