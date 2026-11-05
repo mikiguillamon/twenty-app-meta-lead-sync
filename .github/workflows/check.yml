@@ -11,7 +11,7 @@ jobs:
         with:
           node-version: '24.5.0'
       - run: corepack enable
-      - run: yarn install
+      - run: yarn install --immutable
       - run: yarn typecheck
       - run: yarn test
       - run: yarn build
